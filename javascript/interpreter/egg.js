@@ -54,8 +54,6 @@ function parseApply(applyToken, program) {
   // ( has already been discarded, collect arguments until )
   const args = [];
 
-  console.log(applyToken, program);
-
   for(;;) {
     const result = parseExpression(program);
 
@@ -63,8 +61,6 @@ function parseApply(applyToken, program) {
     program = result.program;
 
     args.push(expression);
-
-    console.log(expression, program);
 
     program = skipWitespace(program);
 
@@ -93,16 +89,19 @@ function parseApply(applyToken, program) {
 // ***********************
 // TESTS
 // ***********************
+function prettyPrint(expression) {
+  console.log(JSON.stringify(expression, null, 2));
+}
+
 function testSingleExpression() {
-  console.log(parseExpression("   \"yaya\""));
-  console.log(parseExpression("   1234"));
-  console.log(parseExpression("   do("));
-  console.log(parseExpression("   a,b"));
-  console.log(parseExpression("   a,   b"));
+  prettyPrint(parseExpression("   \"yaya\""));
+  prettyPrint(parseExpression("   1234"));
+  prettyPrint(parseExpression("   a,b"));
+  prettyPrint(parseExpression("   a,   b"));
 }
 
 function testParseApply() {
-  console.log(parseExpression("do(if(true, +(1,2), false))"))
+  prettyPrint(parseExpression("do(if(true, +(1,2), false))"));
 }
 
 testSingleExpression();
