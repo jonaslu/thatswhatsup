@@ -1,3 +1,10 @@
+const rl = require('readline');
+const readline = rl.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  prompt: 'EGG> '
+});
+
 function skipWitespace(program) {
   const nonWhitespaceCharacter = program.search(/\S/);
   return program.substring(nonWhitespaceCharacter);
@@ -189,3 +196,8 @@ if (process.argv[2] === 'test') {
   testInterpret();
 }
 
+readline.prompt();
+readline.on('line', input => {
+  console.log(interpret(parseExpression(input).expression));
+  readline.prompt();
+});
