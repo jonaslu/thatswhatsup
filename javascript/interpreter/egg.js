@@ -11,7 +11,7 @@ function parseExpression(program) {
     return {
       expression: {
         type: 'string',
-        value : stringValue[1]
+        value: stringValue[1]
       },
       // +2 for the quote chars ("(something)")
       program: program.substr(stringValue[1].length + 2)
@@ -51,10 +51,14 @@ function parseExpression(program) {
 }
 
 function parseApply(applyToken, program) {
-  // ( has already been discarded, collect arguments until )
+  if (program[0] === '(') {
+    // When we call ourselves for returning functions that are immediatly called
+    program = program.substr(1);
+  }
+
   const args = [];
 
-  for(;;) {
+  for (; ;) {
     const result = parseExpression(program);
 
     let expression = result.expression;
@@ -75,14 +79,22 @@ function parseApply(applyToken, program) {
     }
   }
 
+  const expression = {
+    type: 'apply',
+    name: applyToken,
+    args
+  };
+
   // Advance beyond ')'
+  program = skipWitespace(program.substr(1));
+  if (program[0] === '(') {
+    // When interpreting, check if name is of type apply
+    return parseApply(expression, program)
+  }
+
   return {
-    expression: {
-      type: 'apply',
-      name: applyToken,
-      args
-    },
-     program: program.substr(1)
+    expression,
+    program
   }
 }
 
@@ -102,6 +114,7 @@ function testSingleExpression() {
 
 function testParseApply() {
   prettyPrint(parseExpression("do(if(true, +(1,2), false))"));
+  prettyPrint(parseExpression("multiplier(2)(1)"));
 }
 
 testSingleExpression();
