@@ -130,6 +130,28 @@ function setEnv(env, args) {
   return args[args.length - 1];
 }
 
+function interpret(programAst) {
+  // Switch on the type of expression
+
+  const { type } = programAst;
+
+  switch (type) {
+    case 'string':
+    case 'integer':
+      return programAst.value;
+    case 'word':
+      return topEnviroment[programAst.value];
+    case 'apply':
+      // Special forms
+      const { name, args } = programAst;
+      if (name === 'set!') {
+        return setEnv(topEnviroment, args);
+      }
+
+      return topEnviroment[name].apply(null, args.map(interpret));
+  }
+}
+
 // ***********************
 // TESTS
 // ***********************
@@ -155,3 +177,15 @@ function testSetEnv() {
   setEnv(env, args);
   console.log(env);
 }
+
+function testInterpret() {
+  console.log(interpret(parseExpression('+(1,2)').expression));
+}
+
+if (process.argv[2] === 'test') {
+  // testSingleExpression();
+  // testParseApply();
+  // testSetEnv();
+  testInterpret();
+}
+
