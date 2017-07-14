@@ -13,7 +13,7 @@ function parseExpression(program) {
         type: 'string',
         value: stringValue[1]
       },
-      // +2 for the quote chars ("(something)")
+      // +2 for the quote chars ("something")
       program: program.substr(stringValue[1].length + 2)
     }
   }
@@ -98,6 +98,38 @@ function parseApply(applyToken, program) {
   }
 }
 
+// Define an enviroment
+const topEnviroment = {
+  '+': (a, b) => a + b,
+};
+
+function setEnv(env, args) {
+  if (args.length % 2 !== 0) {
+    console.error("Arguments to set! not in even pairs");
+  }
+
+  args
+    .reduce((accumulator, item) => {
+      if (accumulator[accumulator.length - 1].length === 2) {
+        accumulator.push([item]);
+      } else {
+        accumulator[accumulator.length - 1].push(item);
+      }
+
+      return accumulator;
+    }, [[]])
+    .forEach(([variable, value]) => {
+      if (variable.type !== 'word') {
+        console.error("Can only set variables");
+      }
+
+      env[variable.value] = value.value;
+    });
+
+  // Return last argument since everything is an expression
+  return args[args.length - 1];
+}
+
 // ***********************
 // TESTS
 // ***********************
@@ -117,5 +149,9 @@ function testParseApply() {
   prettyPrint(parseExpression("multiplier(2)(1)"));
 }
 
-testSingleExpression();
-testParseApply();
+function testSetEnv() {
+  const env = {};
+  const args = ['a', '1', 'b', '2'].map(item => parseExpression(item).expression);
+  setEnv(env, args);
+  console.log(env);
+}
