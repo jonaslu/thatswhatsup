@@ -13,6 +13,7 @@ typedef struct {
   char* code;
   struct Object** constPool;
 
+  int numberConsts;
   int numberArguments;
 } CodeBlock;
 
@@ -120,20 +121,24 @@ void interpret(VM* vm) {
 
     if (opcode == PRINT) {
       Object* argument = popStackValue(currentStackFrame);
+
+      // TODO Switch on type of argument when printing
       printf("%d", argument->value);
     }
 
     if (opcode == CALL) {
-      Object* constObject = getConstantPoolValue(currentStackFrame);
+      Object* codeObject = getConstantPoolValue(currentStackFrame);
 
       // TODO Assert that const pool object is of TYPE_CODE
 
-      CodeBlock* subRoutineCodeBlock = constObject->codeBlock;
-      StackFrame* nextStackFrame = createStackFrame(constObject->codeBlock);
+      CodeBlock* subRoutineCodeBlock = codeObject->codeBlock;
+      StackFrame* nextStackFrame = createStackFrame(codeObject->codeBlock);
 
+      // Put arguments on the far end of the const pool
       for (int i = 0; i < subRoutineCodeBlock->numberArguments; i++) {
         Object* subroutineArgument = popStackValue(currentStackFrame);
-        pushStackValue(nextStackFrame, subroutineArgument);
+
+        nextStackFrame->codeBlock->constPool[nextStackFrame->codeBlock->numberConsts + i] = subroutineArgument;
       }
 
       pushStackFrame(vm, nextStackFrame);
@@ -165,23 +170,26 @@ void closeVM(VM* vm) {
 
 int main(void) {
   /*
-    // Stack frame now contains first argument (2)
+    // constPool[noLocals + 1,2,3...] -> contains argument(s) 1,2,3 and so on
     int raj(a) {
       return a + 2
     }
 
     PUSH_CONST 0
+    PUSH_CONST 1 <- this corresponds to variable a
     ADD
     RETURN
   */
   CodeBlock* subCodeBlock = malloc(sizeof(CodeBlock));
 
-  char subCode[] = { 1, 0, 3, 4 };
+  char subCode[] = { 1, 0, 1, 1, 3, 4 };
   Object subConstPool[] = { { TYPE_INT, 2 } };
 
   subCodeBlock->numberArguments = 1;
+  subCodeBlock->numberConsts = 1;
+
   subCodeBlock->code = &subCode;
-  subCodeBlock->constPool = malloc(sizeof(Object*));
+  subCodeBlock->constPool = malloc(sizeof(Object*) * (subCodeBlock->numberArguments + subCodeBlock->numberConsts));
   subCodeBlock->constPool[0] = &subConstPool[0];
 
   /*
@@ -204,6 +212,9 @@ int main(void) {
   outerConstPool[1].codeBlock = subCodeBlock;
 
   outerCodeBlock->constPool = malloc(sizeof(Object*) * 3);
+
+  outerCodeBlock->numberArguments = 0;
+  outerCodeBlock->numberConsts = 3;
 
   outerCodeBlock->constPool[0] = &outerConstPool[0];
   outerCodeBlock->constPool[1] = &outerConstPool[1];
