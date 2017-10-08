@@ -1,0 +1,3 @@
+*.so
+test_struct.c
+build/
