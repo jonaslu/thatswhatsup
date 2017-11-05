@@ -4,6 +4,12 @@ import array
 from sys import exit
 
 cdef extern from "bytecode.c":
+  cdef unsigned int _RETURN "RETURN"
+  cdef unsigned int _PUSH_CONST "PUSH_CONST"
+  cdef unsigned int _CALL "CALL"
+  cdef unsigned int _ADD "ADD"
+  cdef unsigned int _PRINT "PRINT"
+
   ctypedef struct CodeBlock:
     unsigned char* code
     Object** constPool
@@ -85,12 +91,6 @@ cdef class VMCodeBlock(VMRootCodeBlock):
     self.object.codeBlock = &self.codeBlock
 
 
-def vm_print_code_block(VMRootCodeBlock cb):
-  print_code_block(&cb.codeBlock)
-
-def vm_run(VMRootCodeBlock cb):
-  run(&cb.codeBlock)
-
 cdef class VMIntObject:
   cdef Object object
 
@@ -100,3 +100,15 @@ cdef class VMIntObject:
   def __setattr__(self, name, val):
     if name == 'value':
       self.object.value = val
+
+def vm_print_code_block(VMRootCodeBlock cb):
+  print_code_block(&cb.codeBlock)
+
+def vm_run(VMRootCodeBlock cb):
+  run(&cb.codeBlock)
+
+RETURN = _RETURN
+PUSH_CONST = _PUSH_CONST
+CALL = _CALL
+ADD = _ADD
+PRINT = _PRINT

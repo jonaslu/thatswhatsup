@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const char PUSH_CONST = 1;
-static const char CALL = 2;
-static const char ADD = 3;
-static const char RETURN = 4;
-static const char PRINT = 5;
+#define RETURN 0
+#define PUSH_CONST 1
+#define CALL 2
+#define ADD 3
+#define PRINT 4
 
 struct Object;
 
