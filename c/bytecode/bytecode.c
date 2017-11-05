@@ -10,7 +10,7 @@ static const char PRINT = 5;
 struct Object;
 
 typedef struct {
-  char* code;
+  unsigned char* code;
   struct Object** constPool;
 
   int numberConsts;
@@ -22,7 +22,7 @@ typedef enum {
   TYPE_CODE
 } Type;
 
-typedef struct {
+typedef struct Object {
   Type type;
 
   union {
@@ -48,55 +48,59 @@ typedef struct {
   int currentFrame;
 } VM;
 
-void pushStackValue(StackFrame* currentStackFrame, Object* value) {
+static void pushStackValue(StackFrame* currentStackFrame, Object* value) {
   currentStackFrame->slots[currentStackFrame->currentStackSlot++] = value;
 }
 
-Object* popStackValue(StackFrame* currentStackFrame) {
+static Object* popStackValue(StackFrame* currentStackFrame) {
   return currentStackFrame->slots[--currentStackFrame->currentStackSlot];
 }
 
-StackFrame* getCurrentStackFrame(VM* vm) {
+static StackFrame* getCurrentStackFrame(VM* vm) {
   return vm->stackFrames[vm->currentFrame];
 }
 
-char getNextInstruction(StackFrame* currentStackFrame) {
+static unsigned char getNextInstruction(StackFrame* currentStackFrame) {
   return currentStackFrame->codeBlock->code[currentStackFrame->ip++];
 }
 
-Object* getConstantPoolValue(StackFrame* currentStackFrame) {
-  char index = getNextInstruction(currentStackFrame);
+static Object* getConstantPoolValue(StackFrame* currentStackFrame) {
+  unsigned char index = getNextInstruction(currentStackFrame);
   return currentStackFrame->codeBlock->constPool[index];
 }
 
-StackFrame* createStackFrame(CodeBlock *codeBlock) {
+static StackFrame* createStackFrame(CodeBlock *codeBlock) {
   StackFrame *stackFrame = malloc(sizeof(StackFrame));
 
   stackFrame->codeBlock = codeBlock;
   stackFrame->currentStackSlot = 0;
   stackFrame->ip = 0;
+
+  return stackFrame;
 }
 
-VM* createVM(StackFrame *baseStackFrame) {
+static VM* createVM(StackFrame *baseStackFrame) {
   VM* vm = malloc(sizeof(VM));
 
   vm->stackFrames[0] = baseStackFrame;
   vm->currentFrame = 0;
+
+  return vm;
 }
 
-void pushStackFrame(VM* vm, StackFrame* nextStackFrame) {
+static void pushStackFrame(VM* vm, StackFrame* nextStackFrame) {
   vm->stackFrames[++vm->currentFrame] = nextStackFrame;
 }
 
-StackFrame* popStackFrame(VM* vm) {
+static StackFrame* popStackFrame(VM* vm) {
   return vm->stackFrames[--vm->currentFrame];
 }
 
-void interpret(VM* vm) {
+static void interpret(VM* vm) {
   StackFrame* currentStackFrame = getCurrentStackFrame(vm);
 
   for(;;) {
-    char opcode = getNextInstruction(currentStackFrame);
+    unsigned char opcode = getNextInstruction(currentStackFrame);
 
     if (opcode == PUSH_CONST) {
       Object* constObject = getConstantPoolValue(currentStackFrame);
@@ -163,70 +167,57 @@ void interpret(VM* vm) {
   }
 }
 
-void closeVM(VM* vm) {
-  // TODO Invoke garbage collection
+static void closeVM(VM* vm) {
   free(vm);
 }
 
-int main(void) {
-  /*
-    // constPool[noLocals + 1,2,3...] -> contains argument(s) 1,2,3 and so on
-    int raj(a) {
-      return a + 2
-    }
-
-    PUSH_CONST 0
-    PUSH_CONST 1 <- this corresponds to variable a
-    ADD
-    RETURN
-  */
-  CodeBlock* subCodeBlock = malloc(sizeof(CodeBlock));
-
-  char subCode[] = { 1, 0, 1, 1, 3, 4 };
-  Object subConstPool[] = { { TYPE_INT, 2 } };
-
-  subCodeBlock->numberArguments = 1;
-  subCodeBlock->numberConsts = 1;
-
-  subCodeBlock->code = &subCode;
-  subCodeBlock->constPool = malloc(sizeof(Object*) * (subCodeBlock->numberArguments + subCodeBlock->numberConsts));
-  subCodeBlock->constPool[0] = &subConstPool[0];
-
-  /*
-    print(1 + raj(2))
-
-    PUSH_CONST 0
-    CALL 1
-
-    PUSH_CONST 2
-    ADD
-    PRINT
-    RETURN
-  */
-
-  CodeBlock* outerCodeBlock = malloc(sizeof(CodeBlock));
-  char code[] = { 1, 0, 2, 1, 1, 2, 3, 5, 4 };
-  outerCodeBlock->code = &code;
-
-  Object outerConstPool[] = { { TYPE_INT, 2 }, { TYPE_CODE, 0 }, { TYPE_INT, 1} };
-  outerConstPool[1].codeBlock = subCodeBlock;
-
-  outerCodeBlock->constPool = malloc(sizeof(Object*) * 3);
-
-  outerCodeBlock->numberArguments = 0;
-  outerCodeBlock->numberConsts = 3;
-
-  outerCodeBlock->constPool[0] = &outerConstPool[0];
-  outerCodeBlock->constPool[1] = &outerConstPool[1];
-  outerCodeBlock->constPool[2] = &outerConstPool[2];
-
-  Object* test = outerCodeBlock->constPool[0];
-
-  StackFrame* baseStackFrame = createStackFrame(outerCodeBlock);
+// Main callable from outside
+void run(CodeBlock* rootCodeBlock) {
+  StackFrame* baseStackFrame = createStackFrame(rootCodeBlock);
   VM* vm = createVM(baseStackFrame);
 
   interpret(vm);
   closeVM(vm);
-
-  return 0;
 }
+
+static void printIntType(Object* intType) {
+  printf("TYPE_INT\n");
+  printf("Int value %d\n", intType->value);
+}
+
+void print_code_block(CodeBlock* codeBlock);
+
+static void printCodeType(Object* codeType) {
+  printf("TYPE_CODE\n");
+  print_code_block(codeType->codeBlock);
+}
+
+static void printType(Object* object) {
+  switch(object->type) {
+    case TYPE_INT: printIntType(object); return;
+    case TYPE_CODE: printCodeType(object); return;
+  }
+}
+
+static void print_code(unsigned char* test) {
+  printf("Code:");
+
+  int i=0;
+  while (test[i] != RETURN) {
+    printf(" %d", test[i++]);
+  }
+  printf("\n");
+}
+
+// Debugging, prints code
+void print_code_block(CodeBlock* codeBlock) {
+  printf("Num consts %d\n", codeBlock->numberConsts);
+  printf("Num arguments %d\n", codeBlock->numberArguments);
+
+  print_code(codeBlock->code);
+
+  for(int i=0; i<codeBlock->numberConsts; i++) {
+    printf("\nConst pool index %d\n", i);
+    printType(codeBlock->constPool[i]);
+  }
+ }
