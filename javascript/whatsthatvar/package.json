@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "esprima": "^4.0.0",
+    "fs-extra": "^4.0.3",
+    "klaw": "^2.1.1"
+  }
+}
