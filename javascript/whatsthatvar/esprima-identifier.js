@@ -4,22 +4,49 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const identifiers = {};
+const moduleRegExp = /(^|(\s)+)((export)|(import))\s+/;
+const crunchBangRegExp = /^#!\s+/;
 
 function getAllIdentifiers(fileContents) {
-  // TODO Handle import modules (parseModule)
-  esprima.parseScript(fileContents, {}, node => {
-    // TODO Filter out requires and module.exports
-    // TODO Add function names
+  let parseMethod = esprima.parseScript;
 
-    if (node.type === "Identifier") {
-      const { name } = node;
-      identifiers[name] = identifiers[name] ? identifiers[name] + 1 : 1;
+  if (moduleRegExp.test(fileContents)) {
+    parseMethod = esprima.parseModule;
+  }
+
+  // Remove any starting crunch-bang
+  if (fileContents.startsWith("#!")) {
+    firstNewline = fileContents.indexOf("\n");
+
+    if (firstNewline > -1) {
+      fileContents = fileContents.substr(firstNewline + 1);
     }
-  });
+  }
+
+  try {
+    parseMethod(fileContents, {}, node => {
+      // TODO Filter out requires and module.exports
+      // TODO Add function names
+
+      if (node.type === "Identifier") {
+        const { name } = node;
+        identifiers[name] = identifiers[name] ? identifiers[name] + 1 : 1;
+      }
+    });
+  } catch (e) {
+    console.error(`Error ${e}`);
+    throw e;
+  }
 }
 
 function parseFile(fileName) {
-  return fs.readFile(fileName, "utf-8").then(getAllIdentifiers);
+  return fs.readFile(fileName, "utf-8").then(fileContents => {
+    try {
+      getAllIdentifiers(fileContents);
+    } catch (e) {
+      console.error(`In file ${fileName}`);
+    }
+  });
 }
 
 const jsFileNames = [];
@@ -40,4 +67,6 @@ new Promise((resolve, reject) => {
 
     return Promise.all(allFilesParsedPromises);
   })
-  .then(() => console.log(identifiers));
+  .then(() => {
+    console.log(identifiers);
+  });
