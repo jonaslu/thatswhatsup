@@ -105,6 +105,9 @@ def read_form(reader):
     elif(next_token == "["):
         reader.next()
         return MalVector(read_list(reader, "]"))
+    elif(next_token[0] == '@'):
+        reader.next()
+        return [MalSymbol('deref'), read_form(reader)]
     else:
         return read_atom(reader)
 
