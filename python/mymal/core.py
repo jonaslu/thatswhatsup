@@ -1,4 +1,6 @@
 import printer
+import reader
+from mal_types import *
 
 def print_with_spaces(str):
     return " ".join(map(lambda x: printer.pr_str(x), str))
@@ -59,6 +61,35 @@ def __gt(a, b):
 def __gte(a, b):
     return a >= b
 
+def __read_string(str):
+    return reader.read_str(str)
+
+def __slurp(filename):
+    with open(filename, 'r') as myfile:
+         return myfile.read()
+
+def __atom(value):
+    return Atom(value)
+
+def __is_atom(value):
+    return type(value) is Atom
+
+def __deref(value):
+    return value.value
+
+def __reset(atom, value):
+    atom.value = value
+    return value
+
+def __swap(atom, fn, *args):
+    if type(fn) is ResultingLambda:
+        new_value = fn.lambda_fn(atom.value, *args)
+    else:
+        new_value = fn(atom.value, *args)
+
+    atom.value = new_value
+    return new_value
+
 core_functions = {
     '+': lambda a, b: a + b,
     '-': lambda a, b: a - b,
@@ -76,7 +107,14 @@ core_functions = {
     '<': __lt,
     '<=': __lte,
     '>': __gt,
-    '>=': __gte
+    '>=': __gte,
+    'read-string': __read_string,
+    'slurp': __slurp,
+    'atom': __atom,
+    'atom?': __is_atom,
+    'deref': __deref,
+    'reset!': __reset,
+    'swap!': __swap
 }
 
 def import_core_functions(env):

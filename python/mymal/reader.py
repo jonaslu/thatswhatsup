@@ -105,7 +105,7 @@ def read_form(reader):
         return read_atom(reader)
 
 def read_str(program):
-    if(len(program) == 0):
+    if not program:
         print("Empty program")
     else:
         tokens = tokenizer(program)

@@ -40,5 +40,13 @@ def pr_str(native_value, print_readably = True):
             return native_value
     if callable(native_value):
         return "#function"
+
+    if (type(native_value) is MalSymbol):
+        return native_value.value
+
+    if (type(native_value) is Atom):
+        return "(atom " + str(native_value.value) + ")"
+
     else:
+        # Numbers are all that is left
         return str(native_value)
