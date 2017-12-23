@@ -194,11 +194,20 @@ if __name__ == "__main__":
     readline.parse_and_bind("")
 
     parser = argparse.ArgumentParser()
+
     parser.add_argument('-d', '--debug', dest='debug', action='store_true')
-    args = parser.parse_args()
+    args, argv = parser.parse_known_args()
 
     if args.debug:
         utils.setDebug()
+
+    initial_repl_env.set('*ARGV*', [])
+
+    if (len(argv) >= 1):
+        filename, *rest = argv
+        initial_repl_env.set('*ARGV*', rest)
+        rep("(load-file \"" + filename + "\")")
+        exit(0)
 
     while True:
         try:
