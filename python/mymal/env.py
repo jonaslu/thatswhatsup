@@ -16,13 +16,13 @@ class Env:
     def __repr__(self):
         items = []
         for key, value in self.data.items():
-            items.append(key + ": " + printer.pr_str(value))
+            items.append(key + ": " + repr(value))
 
         result = "\n".join(items)
 
         if (self.outer):
             result += "\nOuter:\n"
-            result += (str(self.outer))
+            result += (repr(self.outer))
 
         return result
 

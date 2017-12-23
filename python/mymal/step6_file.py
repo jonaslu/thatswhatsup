@@ -203,8 +203,9 @@ if __name__ == "__main__":
     while True:
         try:
             program = input("user> ").strip()
+
             if program == "env":
-                print(initial_repl_env)
+                print(repr(initial_repl_env))
             else:
                 rep(program)
         except EOFError:
