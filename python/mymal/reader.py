@@ -4,8 +4,10 @@ import utils
 
 is_string_regex = re.compile("^\"(.*)\"$")
 
+
 class NoNextToken(Exception):
     pass
+
 
 class Reader:
     def __init__(self, tokens):
@@ -30,15 +32,18 @@ class Reader:
     def peek(self):
         return self.tokens[self.position]
 
+
 def tokenizer(program):
-    return list(
-        filter(lambda s: s != '',
-            re.findall(
-                r'''[\s,]*(~@|[\[\]{}()\\'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)''',
-                program
-            )
-        )
+    tokens = re.findall(
+        r'''[\s,]*(~@|[\[\]{}()\\'`~^@]|"(?:\\.|[^\\"])*"|;.*|[^\s\[\]{}('"`,;)]*)''',
+        program
     )
+
+    tokens = filter(lambda s: s != '', tokens)
+    tokens = filter(lambda s: s[0] != ';', tokens)
+
+    return list(tokens)
+
 
 def read_list(reader, end_list_token=")"):
     return_list = []
@@ -48,6 +53,7 @@ def read_list(reader, end_list_token=")"):
 
     reader.next()
     return return_list
+
 
 def read_atom(reader):
     current_token = reader.next()
@@ -89,10 +95,8 @@ def read_atom(reader):
 # form (special case of a symbol
 # evaluating to itself. Whenever there
 # is a list the fun goes first).
-#
-# Special forms goes here (language level
-# forms that do not do the usual self-evaluation
-# mechnisms such as def! and let*)
+
+
 def read_form(reader):
     next_token = reader.peek()
     if(next_token == "("):
@@ -104,11 +108,17 @@ def read_form(reader):
     else:
         return read_atom(reader)
 
+
 def read_str(program):
     if not program:
         print("Empty program")
     else:
         tokens = tokenizer(program)
+
+        # If everything is a comment
+        if not tokens:
+            return None
+
         reader = Reader(tokens)
         try:
             ast = read_form(reader)
