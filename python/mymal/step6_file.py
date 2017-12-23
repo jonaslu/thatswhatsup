@@ -187,8 +187,8 @@ def rep(program):
         print("Item not callable", exception)
 
 # Define not in mal itself
-rep("(def! not (fn* (a) (if a false true)))")
-rep("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))")
+EVAL(READ("(def! not (fn* (a) (if a false true)))"), initial_repl_env)
+EVAL(READ("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"), initial_repl_env)
 
 if __name__ == "__main__":
     readline.parse_and_bind("")
