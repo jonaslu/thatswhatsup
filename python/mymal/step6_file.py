@@ -186,7 +186,7 @@ def rep(program):
     except ItemNotCallable as exception:
         print("Item not callable", exception)
 
-# Define not in mal itself
+# Can use load-file to read these in
 EVAL(READ("(def! not (fn* (a) (if a false true)))"), initial_repl_env)
 EVAL(READ("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"), initial_repl_env)
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     if (len(argv) >= 1):
         filename, *rest = argv
         initial_repl_env.set('*ARGV*', rest)
-        rep("(load-file \"" + filename + "\")")
+        EVAL(READ("(load-file \"" + filename + "\")"), initial_repl_env)
         exit(0)
 
     while True:

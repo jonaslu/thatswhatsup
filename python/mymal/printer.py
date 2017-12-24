@@ -42,10 +42,10 @@ def pr_str(native_value, print_readably = True):
     if callable(native_value):
         return "#function"
 
-    if (type(native_value) is MalSymbol):
+    if type(native_value) is MalSymbol:
         return native_value.value
 
-    if (type(native_value) is Atom):
+    if type(native_value) is Atom:
         return "(atom " + str(native_value.value) + ")"
 
     if type(native_value) is dict:
