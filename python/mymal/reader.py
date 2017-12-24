@@ -133,6 +133,7 @@ def read_form(reader):
         return read_atom(reader)
 
 
+# Could add check for balanced parenthesis here
 def read_str(program):
     if not program:
         print("Empty program")

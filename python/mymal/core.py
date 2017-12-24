@@ -2,39 +2,49 @@ import printer
 import reader
 from mal_types import *
 
+
 def print_with_spaces(str):
     return " ".join(map(lambda x: printer.pr_str(x), str))
+
 
 def __prn(*str):
     print(print_with_spaces(str))
 
     return None
 
+
 def __prn_str(*str):
     return(print_with_spaces(str))
 
+
 def __str(*str):
     return "".join(map(lambda x: printer.pr_str(x, False), str))
+
 
 def __println(*strs):
     print(" ".join(map(lambda x: printer.pr_str(x, False), strs)))
 
     return None
 
+
 def __list(*items):
     return [*items]
+
 
 def __isList(lst):
     return True if (type(lst) is list) else False
 
+
 def __isEmpty(lst):
     return True if not lst else False
+
 
 def __count(lst):
     if isinstance(lst, list):
         return len(lst)
 
     return 0
+
 
 def __equals(item1, item2):
     if item1 is list and item2 is list:
@@ -49,37 +59,48 @@ def __equals(item1, item2):
     else:
         return item1 == item2
 
+
 def __lt(a, b):
     return a < b
+
 
 def __lte(a, b):
     return a <= b
 
+
 def __gt(a, b):
     return a > b
+
 
 def __gte(a, b):
     return a >= b
 
+
 def __read_string(str):
     return reader.read_str(str)
 
+
 def __slurp(filename):
     with open(filename, 'r') as myfile:
-         return myfile.read()
+        return myfile.read()
+
 
 def __atom(value):
     return Atom(value)
 
+
 def __is_atom(value):
     return type(value) is Atom
+
 
 def __deref(value):
     return value.value
 
+
 def __reset(atom, value):
     atom.value = value
     return value
+
 
 def __swap(atom, fn, *args):
     if type(fn) is ResultingLambda:
@@ -89,6 +110,14 @@ def __swap(atom, fn, *args):
 
     atom.value = new_value
     return new_value
+
+
+def __cons(val1, val2):
+    return [val1] + val2
+
+
+def __concat(*lists):
+    return sum(lists, [])
 
 core_functions = {
     '+': lambda a, b: a + b,
@@ -114,8 +143,11 @@ core_functions = {
     'atom?': __is_atom,
     'deref': __deref,
     'reset!': __reset,
-    'swap!': __swap
+    'swap!': __swap,
+    'cons': __cons,
+    'concat': __concat
 }
+
 
 def import_core_functions(env):
     for func, lambdar in core_functions.items():

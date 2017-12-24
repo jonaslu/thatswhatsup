@@ -5,6 +5,11 @@ class MalSymbol:
     def __repr__(self):
         return "Symbol:" + self.value
 
+    def __eq__(self, other):
+        if type(other) is MalSymbol:
+            return self.value == other.value
+
+        return False
 
 class MalVector(list):
     pass
