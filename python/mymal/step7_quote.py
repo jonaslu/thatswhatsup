@@ -23,7 +23,7 @@ initial_repl_env.set('eval', lambda ast: EVAL(ast, initial_repl_env))
 
 
 def is_pair(arg):
-    return type(arg) is list and len(arg) > 0
+    return (type(arg) is list or type(arg) is MalVector) and len(arg) > 0
 
 
 def quasi_quote(ast):
@@ -37,6 +37,7 @@ def quasi_quote(ast):
         function_symbol = head.value
         if function_symbol == "unquote":
             return ast[1]
+
 
     elif is_pair(ast[0]) and type(ast[0][0]) is MalSymbol and ast[0][0].value == "splice-unquote":
         return [MalSymbol("concat"), ast[0][1], quasi_quote(ast[1:])]

@@ -129,6 +129,18 @@ def read_form(reader):
     elif(next_token == "{"):
         reader.next()
         return read_map(reader)
+    elif(next_token == "'"):
+        reader.next()
+        return [MalSymbol("quote"), read_form(reader)]
+    elif(next_token == "`"):
+        reader.next()
+        return [MalSymbol("quasiquote"), read_form(reader)]
+    elif(next_token == "~"):
+        reader.next()
+        return [MalSymbol("unquote"), read_form(reader)]
+    elif(next_token == "~@"):
+        reader.next()
+        return [MalSymbol("splice-unquote"), read_form(reader)]
     else:
         return read_atom(reader)
 
