@@ -48,6 +48,14 @@ def pr_str(native_value, print_readably = True):
     if (type(native_value) is Atom):
         return "(atom " + str(native_value.value) + ")"
 
+    if type(native_value) is dict:
+        map_string_value = "{"
+        for key, value in native_value.items():
+            map_string_value += pr_str(key) + " " + pr_str(value)
+
+        map_string_value += "}"
+        return map_string_value
+
     else:
         # Numbers are all that is left
         return str(native_value)

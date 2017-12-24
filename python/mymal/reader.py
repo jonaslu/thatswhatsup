@@ -55,6 +55,24 @@ def read_list(reader, end_list_token=")"):
     return return_list
 
 
+def read_map(reader):
+    return_map = {}
+
+    key_value_list =  []
+
+    while(reader.peek() != '}'):
+        key_value_list.append(read_form(reader))
+
+    # Skip }
+    reader.next()
+
+    key_values = utils.chunk_list(key_value_list, 2)
+    for key, value in key_values:
+        return_map[key] = value
+
+    return return_map
+
+
 def read_atom(reader):
     current_token = reader.next()
 
@@ -108,6 +126,9 @@ def read_form(reader):
     elif(next_token[0] == '@'):
         reader.next()
         return [MalSymbol('deref'), read_form(reader)]
+    elif(next_token == "{"):
+        reader.next()
+        return read_map(reader)
     else:
         return read_atom(reader)
 
