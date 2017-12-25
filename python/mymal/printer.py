@@ -42,6 +42,9 @@ def pr_str(native_value, print_readably = True):
     if callable(native_value):
         return "#function"
 
+    if type(native_value) is ResultingLambda:
+        return "#function"
+
     if type(native_value) is MalSymbol:
         return native_value.value
 

@@ -26,6 +26,7 @@ class ResultingLambda:
         self.lambda_body = lambda_body
         self.lambda_params = lambda_params
         self.env = lambda_env
+        self.is_macro = False
 
     def __repr__(self):
         return "Lambda body: " + str(self.lambda_body)
