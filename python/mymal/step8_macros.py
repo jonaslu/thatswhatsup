@@ -40,9 +40,18 @@ def is_macro_call(ast, env):
 
 
 def macroexpand(ast, env):
+    macro_expanded = False
+
+    if is_macro_call(ast, env):
+        macro_expanded = True
+
     while(is_macro_call(ast, env)):
         macro_function = env.get(ast[0].value)
         ast = macro_function.lambda_fn(*ast[1:])
+
+    if macro_expanded:
+        print("Macro expanded >")
+        utils.print_ast(ast)
 
     return ast
 
@@ -80,6 +89,10 @@ def READ(program):
 
 
 def eval_ast(maltype, repl_env):
+    if utils.debug():
+        utils.prn("eval_ast >\n")
+        utils.print_ast(maltype)
+
     # This is only here because of the call from regular application
     # at the far end of EVAL. Could possibly be moved and this
     # could be called eval-atom instead
@@ -105,7 +118,14 @@ def EVAL(ast, repl_env):
     # in which it's native "value" is returned - which is symbols
     # since true, false, nil, numbers and "" are returned
     # as python primitives
+    eval_invocation = 0
+
     while(True):
+        # Want to print ast here (possibly in some nice way)
+        if utils.debug():
+            eval_invocation += 1
+            print("EVAL invocation", eval_invocation)
+            utils.print_ast(ast)
 
         if (type(ast) is not list):
             return eval_ast(ast, repl_env)
@@ -118,7 +138,9 @@ def EVAL(ast, repl_env):
             if type(ast[0]) is MalSymbol:
 
                 ast = macroexpand(ast, repl_env)
+                # print the expanded macro here
 
+                # If macro-expansion caused the list to not contain macros anymore
                 if type(ast) is not list:
                     return eval_ast(ast, repl_env)
 
@@ -155,8 +177,9 @@ def EVAL(ast, repl_env):
                             ast = else_branch
                             continue
 
+                        # There is no else-branch
                         except IndexError:
-                            # return nill which will internally evaluate to None
+                            # return None which is mapped to nil in mal
                             return None
                     else:
                         true_branch = ast[2]
@@ -203,6 +226,9 @@ def EVAL(ast, repl_env):
                     continue
 
                 elif function_symbol == "fn*":
+                    if utils.debug():
+                        print("fn* -> returning lambda")
+
                     lambda_params = list(map(lambda item: item.value, ast[1]))
                     lambda_body = ast[2]
 
@@ -212,6 +238,8 @@ def EVAL(ast, repl_env):
 
                         # If args > lambda_params there is an
                         # opportunity to return a partial application
+
+                        # Add debugging here? Use it some
 
                         return EVAL(lambda_body, lambda_env)
 
@@ -233,9 +261,15 @@ def EVAL(ast, repl_env):
 
             # Regular function application (+ 1 2)
             # or a lambda ((fn* (a b) (+ a b) 1 2)
+            if utils.debug():
+                print("Function expansion")
+
             function_lambda, *arguments = eval_ast(ast, repl_env)
 
             if type(function_lambda) is ResultingLambda:
+                if utils.debug():
+                    print("Calling fn* lambda with arguments", arguments)
+
                 lambda_env = Env(function_lambda.env)
                 lambda_env.bind(function_lambda.lambda_params, list(arguments))
 
@@ -259,6 +293,10 @@ def rep(program):
     try:
         ast = READ(program)
         result = EVAL(ast, initial_repl_env)
+
+        if utils.debug():
+            print("Result >")
+
         PRINT(result)
     except SymbolNotFound as exception:
         print("Symbol not found", exception)

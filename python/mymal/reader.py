@@ -159,10 +159,6 @@ def read_str(program):
         reader = Reader(tokens)
         try:
             ast = read_form(reader)
-
-            if utils.debug():
-                print(ast)
-
             return ast
 
         except NoNextToken:
