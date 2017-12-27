@@ -1,0 +1,92 @@
+;; Gets the last item via nth function
+(def! get-last-nth
+  (fn* (lst)
+    (if
+      (empty? lst)
+      nil
+      (nth lst (- (count lst) 1))
+    )
+  )
+)
+
+;; Helper function to get last element in a list
+(def! get-last-iter
+  (fn* (lst head)
+    (if
+      (empty? lst)
+      head
+      (get-last-iter (rest lst) (first lst))
+    )
+  )
+)
+
+;; Gets the last item in a list (1 2 3) -> 3
+(def! get-last
+  (fn* (lst)
+    (get-last-iter lst nil)
+  )
+)
+
+;; Helper function to get all but the last elements in a list
+(def! but-last-iter
+  (fn* (lst res)
+    (if (= (count lst) 1)
+      res
+      (but-last-iter
+        (rest lst)
+        (concat res (list (first lst)))
+      )
+    )
+  )
+)
+
+;; Returns all but the last element in a list (1 2 3) -> (1 2)
+(def! but-last
+  (fn* (lst)
+    (but-last-iter lst ())
+  )
+)
+
+;; Iterates through each element of a list and if
+;; that element is a list apply the passed fn to it
+(def! apply-each-list-element
+  (fn* (lst fn)
+    (if (empty? lst)
+      ()
+      (let* (head (first lst))
+        (cons
+          (if (list? head)
+            (fn head)
+            head)
+          (apply-each-list-element (rest lst) fn)
+        )
+      )
+    )
+  )
+)
+
+;; Moves the last element of a list to the first position in that list
+(def! reposition-last-element
+  (fn* (lst)
+    (do
+      (if (list? lst)
+        (concat
+          (list (get-last lst))
+          ;; Find any lists within this list and re-do them
+          (apply-each-list-element (but-last lst) reposition-last-element)
+        )
+        lst
+      )
+    )
+  )
+)
+
+;; Macro that turns postfix code into prefix code
+;; Does not handle quoted lists that should not be processed
+;;
+;; E g ((1 2 +) 3 +) -> (+ (+ 1 2) 3)
+(defmacro! postfix
+  (fn* (lst)
+    (reposition-last-element lst)
+  )
+)
