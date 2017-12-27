@@ -1,6 +1,8 @@
 import printer
 
 # Possibly refactor out to a message exception base class
+
+
 class SymbolNotFound(Exception):
     def __init__(self, message):
         self.message = message
@@ -8,8 +10,9 @@ class SymbolNotFound(Exception):
     def __repr__(self):
         return "Symbol not found " + self.message
 
+
 class Env:
-    def __init__(self, outer = None):
+    def __init__(self, outer=None):
         self.outer = outer
         self.data = {}
 
@@ -33,18 +36,13 @@ class Env:
         try:
             return self.data[symbol]
         except KeyError:
-            pass
-
-        if self.outer:
-            return self.outer.find(symbol)
+            if self.outer:
+                return self.outer.find(symbol)
+            else:
+                raise SymbolNotFound(symbol)
 
     def get(self, symbol):
-        native_value = self.find(symbol)
-
-        if native_value is not None:
-            return native_value
-
-        raise SymbolNotFound(symbol)
+        return self.find(symbol)
 
     def bind(self, symbols, values):
         for i in range(0, len(symbols)):
