@@ -1,0 +1,39 @@
+(def! not
+  (fn* (a)
+    (if a
+      false
+      true
+    )
+  )
+)
+
+(defmacro! cond
+  (fn* (& xs)
+    (if (not (empty? xs))
+      (list 'if (first xs)
+        (first (rest xs))
+        (cons 'cond (rest (rest xs)))
+        ;; Index out of bounds
+      )
+    )
+  )
+)
+
+(defmacro! or
+  (fn* (& xs)
+    (if (not (empty? xs))
+      (list
+        'if (first xs)
+          (first xs)
+          (list
+            'if (empty? (rest xs))
+            false
+            (cons 'or (rest xs))
+          )
+      )
+    )
+  )
+)
+
+;; TODO Can do a macro defn so that
+;; I don't have to write (fn* all the time)

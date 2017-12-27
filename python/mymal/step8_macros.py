@@ -49,7 +49,7 @@ def macroexpand(ast, env):
         macro_function = env.get(ast[0].value)
         ast = macro_function.lambda_fn(*ast[1:])
 
-    if macro_expanded:
+    if utils.debug() and macro_expanded:
         print("Macro expanded >")
         utils.print_ast(ast)
 
@@ -121,10 +121,13 @@ def EVAL(ast, repl_env):
     eval_invocation = 0
 
     while(True):
-        # Want to print ast here (possibly in some nice way)
         if utils.debug():
             eval_invocation += 1
             print("EVAL invocation", eval_invocation)
+            # TODO make this take a flag to print builtins (core functions)
+            # or not
+            print(repr(repl_env))
+
             utils.print_ast(ast)
 
         if (type(ast) is not list):
@@ -268,7 +271,7 @@ def EVAL(ast, repl_env):
 
             if type(function_lambda) is ResultingLambda:
                 if utils.debug():
-                    print("Calling fn* lambda with arguments", arguments)
+                    print("Calling fn* lambda with arguments", list(arguments))
 
                 lambda_env = Env(function_lambda.env)
                 lambda_env.bind(function_lambda.lambda_params, list(arguments))
@@ -302,11 +305,13 @@ def rep(program):
         print("Symbol not found", exception)
     except ItemNotCallable as exception:
         print("Item not callable", exception)
+    except IndexError as exception:
+        print("Index out of bounds", exception)
+    except Exception as exception:
+        print("General exception caught", exception)
 
-
-# Can use load-file to read these in
-EVAL(READ("(def! not (fn* (a) (if a false true)))"), initial_repl_env)
 EVAL(READ("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \")\")))))"), initial_repl_env)
+EVAL(READ("(load-file \"stdlib.mal\")"), initial_repl_env)
 
 if __name__ == "__main__":
     readline.parse_and_bind("")

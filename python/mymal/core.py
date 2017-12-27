@@ -119,6 +119,32 @@ def __cons(val1, val2):
 def __concat(*lists):
     return sum(lists, [])
 
+
+def __nth(lst, index):
+    if index >= len(lst):
+        raise IndexError
+
+    return lst[index]
+
+
+def __first(lst):
+    if not lst:
+        return None
+
+    return lst[0]
+
+
+def __rest(lst):
+    if not lst:
+        return []
+
+    return lst[1:]
+
+
+def __throw(message):
+    raise Exception(message)
+
+
 core_functions = {
     '+': lambda a, b: a + b,
     '-': lambda a, b: a - b,
@@ -145,7 +171,11 @@ core_functions = {
     'reset!': __reset,
     'swap!': __swap,
     'cons': __cons,
-    'concat': __concat
+    'concat': __concat,
+    'nth': __nth,
+    'first': __first,
+    'rest': __rest,
+    'throw': __throw,
 }
 
 
