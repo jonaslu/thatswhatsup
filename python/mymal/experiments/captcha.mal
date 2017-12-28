@@ -1,0 +1,33 @@
+;; Advent of code 2017 - first task
+
+(def! add-first-as-last
+  (fn* (lst)
+    (concat lst
+      (list (first lst))
+    )
+  )
+)
+
+(def! sum-all-same-seq
+  (fn* (prev lst sum)
+    (if (empty? lst)
+      sum
+      (let*(head (first lst))
+        (if (= head prev)
+          (sum-all-same-seq head (rest lst) (+ head sum))
+          (sum-all-same-seq head (rest lst) sum)
+        )
+      )
+    )
+  )
+)
+
+(def! sum-all-matching
+  (fn* (lst)
+    (sum-all-same-seq
+      nil
+      (add-first-as-last lst)
+      0
+    )
+  )
+)

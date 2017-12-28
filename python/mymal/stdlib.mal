@@ -35,5 +35,11 @@
   )
 )
 
-;; TODO Can do a macro defn so that
-;; I don't have to write (fn* all the time)
+;; I getz tired of writing (def! name (fn* (args) (body)))
+(defmacro! defn
+  (fn* (name, args, body)
+    `(def! ~name
+      (fn* ~args ~body)
+    )
+  )
+)
