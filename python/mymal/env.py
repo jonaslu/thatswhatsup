@@ -4,11 +4,11 @@ import printer
 
 
 class SymbolNotFound(Exception):
-    def __init__(self, message):
-        self.message = message
+    def __init__(self, symbol):
+        self.symbol = symbol
 
     def __repr__(self):
-        return "Symbol not found " + self.message
+        return "'" + self.symbol + "' not found"
 
 
 class Env:

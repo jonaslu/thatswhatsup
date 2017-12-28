@@ -30,3 +30,8 @@ class ResultingLambda:
 
     def __repr__(self):
         return "Lambda body: " + str(self.lambda_body)
+
+
+class MalException(Exception):
+    def __init__(self, value):
+        self.value = value

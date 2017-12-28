@@ -1,6 +1,7 @@
 import printer
 import reader
 from mal_types import *
+from utils import decode_keyword, chunk_list
 
 
 def print_with_spaces(str):
@@ -47,7 +48,7 @@ def __count(lst):
 
 
 def __equals(item1, item2):
-    if item1 is list and item2 is list:
+    if isinstance(item1, list) and isinstance(item2, list):
         if len(item1) == len(item2):
             for i in range(0, len(item1)):
                 if not __equals(item1[i], item2[i]):
@@ -141,9 +142,81 @@ def __rest(lst):
     return lst[1:]
 
 
-def __throw(message):
-    raise Exception(message)
+def __is_value(compare_value):
+    return lambda value: value == compare_value
 
+
+def __throw(message):
+    raise MalException(message)
+
+
+def __is_symbol(value):
+    return type(value) is MalSymbol
+
+
+def __symbol(value):
+    return MalSymbol(value)
+
+
+def __is_keyword(value):
+    return type(value) is str and decode_keyword(value) is not None
+
+
+def __keyword(value):
+    if value[:1] == '\u029E':
+        return value
+
+    return "\u029E" + value
+
+
+def __is_sequential(value):
+    return type(value) is list or type(value) is MalVector
+
+
+def __map(func, value):
+    map_func = func
+
+    if type(func) is ResultingLambda:
+        map_func = func.lambda_fn
+
+    return list(map(map_func, value))
+
+
+def __apply(func, *rest):
+    last_elem = rest[-1]
+    but_last = list(rest[:-1])
+
+    apply_func = func
+
+    if type(func) is ResultingLambda:
+        apply_func = func.lambda_fn
+
+    all_args = but_last + last_elem
+
+    return apply_func(*all_args)
+
+
+def __get_hashmap(hashmap, key):
+    if hashmap and type(hashmap) is dict:
+        return hashmap[key]
+
+    return None
+
+
+def __assoc(hashmap, *keyvalues):
+    ret_val = dict(hashmap)
+    for key, value in chunk_list(keyvalues, 2):
+        ret_val[key] = value
+
+    return ret_val
+
+def __dissoc(hashmap, *remove_keys):
+    ret_val = dict(hashmap)
+    for key in remove_keys:
+        if key in ret_val:
+            del ret_val[key]
+
+    return ret_val
 
 core_functions = {
     '+': lambda a, b: a + b,
@@ -176,6 +249,26 @@ core_functions = {
     'first': __first,
     'rest': __rest,
     'throw': __throw,
+    'nil?': __is_value(None),
+    'true?': __is_value(True),
+    'false?': __is_value(False),
+    'symbol?': __is_symbol,
+    'symbol': __symbol,
+    'keyword?': __is_keyword,
+    'sequential?': __is_sequential,
+    'keyword': __keyword,
+    'map': __map,
+    'apply': __apply,
+    'vector?': lambda x: type(x) is MalVector,
+    'map?': lambda x: type(x) is dict,
+    'vector': lambda *x: MalVector(list(x)),
+    'hash-map': lambda *values: dict(chunk_list(values, 2)),
+    'get': __get_hashmap,
+    'assoc': __assoc,
+    'dissoc': __dissoc,
+    'contains?': lambda hashmap, key: key in hashmap,
+    'keys': lambda hashmap: list(hashmap.keys()),
+    'vals': lambda hashmap: list(hashmap.values())
 }
 
 

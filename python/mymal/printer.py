@@ -1,13 +1,16 @@
 from mal_types import *
 import utils
 
+
 def print_lists(native_value, print_readably, start_symbol="(", end_symbol=")"):
     return_expr = start_symbol
-    return_expr += " ".join(list(map(lambda str: pr_str(str, print_readably), native_value)))
+    return_expr += " ".join(list(map(lambda str: pr_str(str,
+                                                        print_readably), native_value)))
     return_expr += end_symbol
     return return_expr
 
-def pr_str(native_value, print_readably = True):
+
+def pr_str(native_value, print_readably=True):
     if (type(native_value) is list):
         return print_lists(native_value, print_readably)
 
@@ -53,9 +56,13 @@ def pr_str(native_value, print_readably = True):
 
     if type(native_value) is dict:
         map_string_value = "{"
-        for key, value in native_value.items():
-            map_string_value += pr_str(key) + " " + pr_str(value)
+        key_values = []
 
+        for key, value in native_value.items():
+            key_values.append(pr_str(key, print_readably) + \
+                " " + pr_str(value, print_readably))
+
+        map_string_value += " ".join(key_values)
         map_string_value += "}"
         return map_string_value
 
