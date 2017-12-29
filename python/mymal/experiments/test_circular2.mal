@@ -1,0 +1,105 @@
+(load-file "experiments/circular2.mal")
+(load-file "test/assert.mal")
+
+(assert
+  (add-pos '(0 0) '(0 1))
+  '(0 1)
+  "add x to pos"
+)
+
+(assert
+  (add-pos '(0 0) '(1 0))
+  '(1 0)
+  "add y to pos"
+)
+
+(assert
+  (add-pos '(0 0) '(0 -1))
+  '(0 -1)
+  "sub x to pos"
+)
+
+(assert
+  (add-pos '(0 0) '(-1 0))
+  '(-1 0)
+  "sub y to pos"
+)
+
+(assert
+  (state-has-pos '((0 0)) '(0 0))
+  true
+  "check 1 state exists"
+)
+
+(assert
+  (state-has-pos '((0 0) (0 1)) '(0 1))
+  true
+  "check second state exists"
+)
+
+(assert
+  (state-has-pos '((0 0) (0 1)) '(1 0))
+  false
+  "check state not exists"
+)
+
+(assert
+  (get-next-direction-index 0)
+  1
+  "next direction from zero"
+)
+
+(assert
+  (get-next-direction-index 2)
+  3
+  "next direction from two"
+)
+
+(assert
+  (get-next-direction-index 3)
+  0
+  "next direction from three"
+)
+
+
+(assert
+  (manhattan-distance 1)
+  0
+  "manhattan 1"
+)
+
+(assert
+  (manhattan-distance 3)
+  2
+  "manhattan 2"
+)
+
+(assert
+  (manhattan-distance 8)
+  1
+  "manhattan 8"
+)
+
+(assert
+  (manhattan-distance 9)
+  2
+  "manhattan 9"
+)
+
+(assert
+  (manhattan-distance 12)
+  3
+  "manhattan 12"
+)
+
+(assert
+  (manhattan-distance 23)
+  2
+  "manhattan 23"
+)
+
+(assert
+  (manhattan-distance 1024)
+  31
+  "manhattan 1024"
+)

@@ -1,0 +1,134 @@
+;; Slower implementation that actually generates the
+;; positions in the circular matrix. Returns the coordinates
+;; of a number and then calculates it's distance to origin.
+
+;; State-machine that runs counter-clockwise (as in the example)
+;; by walking in the direction ("direction") while looking
+;; at the already generated states to determine wether to change
+;; direction. Stops when the number of steps walked matches
+;; the inputted number.
+
+(def! directions
+  '(
+    ;; "left"
+      {
+        "direction" (0 1)
+        "looking" (1 0)
+      }
+    ;; "up"
+      {
+        "direction" (1 0)
+        "looking" (0 -1)
+      }
+    ;; "right"
+      {
+        "direction" (0 -1)
+        "looking" (-1 0)
+      }
+    ;; "down"
+      {
+        "direction" (-1 0)
+        "looking" (0 1)
+      }
+  )
+)
+
+(defn get-y
+  (pos)
+    (nth pos 0)
+)
+
+(defn get-x
+  (pos)
+    (nth pos 1)
+)
+
+;; Adds coordinates to a position
+(defn add-pos
+  (pos add)
+    (let*
+      (
+        cur-y (get-y pos)
+        cur-x (get-x pos)
+        add-y (get-y add)
+        add-x (get-x add)
+        new-y (+ cur-y add-y)
+        new-x (+ cur-x add-x)
+      )
+      (list new-y new-x)
+    )
+)
+
+;; Checks if the coordinates are already known in the state
+(defn state-has-pos
+  (state new-pos)
+    (if (empty? state)
+      false
+      (let*
+        (
+          head (first state)
+        )
+        (if (= head new-pos)
+          true
+          (state-has-pos (rest state) new-pos)
+        )
+      )
+    )
+)
+
+;; Get the next state (forwards the state-machine)
+(defn get-next-direction-index
+  (current-direction-index)
+    (if (>= current-direction-index 3)
+      0
+      (+ current-direction-index 1)
+    )
+)
+
+;; Walks the matrix a number of positions while keeping state
+;; of already seen positions. If the new position doesn't have a
+;; value in the looking position (think of it like a maze)
+;; then it changes directions and starts walking in the new direction
+(defn next-state
+  (num counter cur-pos state direction-index)
+    (if (= counter num)
+      cur-pos
+      (let*
+        (
+          direction (nth directions direction-index)
+          direction-add-pos (get direction "direction")
+          looking-pos (get direction "looking")
+          next-pos (add-pos cur-pos direction-add-pos)
+          new-state (cons next-pos state)
+          looking-pos (add-pos next-pos looking-pos)
+          has-looking-pos (state-has-pos state looking-pos)
+          new-direction-index (get-next-direction-index direction-index)
+        )
+        (if has-looking-pos
+          (next-state num (+ 1 counter) next-pos new-state direction-index)
+          (next-state num (+ 1 counter) next-pos new-state new-direction-index)
+        )
+      )
+    )
+)
+
+(defn abs
+  (n)
+    (if (< n 0)
+      (* n -1)
+      n
+    )
+)
+
+;; And so - the manhattan distance for a number
+(defn manhattan-distance
+  (num)
+    (let*
+      (
+        resulting-coordinates (next-state num 1 '(0 0) '((0 0)) 0)
+        resulting-x (get-x resulting-coordinates)
+        resulting-y (get-y resulting-coordinates)
+      )
+      (+ (abs resulting-x) (abs resulting-y))
+    )
+)
