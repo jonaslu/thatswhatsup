@@ -1,0 +1,118 @@
+;; A circular pattern as so
+;; 17+ 16  15* 14  13+ .
+;; 18   5+  4*  3+ 12  ^
+;; 19*  6*  1   2* 11* |
+;; 20   7+  8*  9+ 10  |
+;; 21+ 22  23* 24  25+ 26
+;;
+;; The closest possible path (the manhattan distance) from
+;; any point is via the numbers
+;; directly up, down, left or right denoted with
+;; * in the image
+
+;; Other numbers can always go via the outer
+;; edge to that number and then inwards
+;; (eg number 20 needs to go 1 up to 19 before
+;; taking the shortest path (= 2) in to 1)
+
+;; The numers of the box grows with the closest
+;; possible path as follows
+;; n=0,1,2,3 (shortest distance from the straight line to 1)
+;; numbers in the box = (2*n + 1)^2
+;; e g numbers with shortest distance 2 is
+;; between (2*1 + 1)^2 = 9 and (2*2 + 1)^2 = 25
+
+;; So any number greater than the inner bounding box
+;; must have the shortest distance of at least n
+;; if it is directly in the line to 1 (down, right, up, down)
+
+;; Then we need to calculate the distance needed to travel
+;; along the outermost row before being able to traverse straight
+;; inwards. If the number is more than the edge of a quandrant
+;; (denoted +  in the image) then that distance is
+;; the quandrants edge + n (e g 17 + 2 = 19)
+
+;; The lower bounding quandrant is found by taking the 4th
+;; quadrant number and (e g 9 or 25)
+;; subtracting 2*n until the lower bounding quandrant edge
+;; is found
+
+;; The closest number with the closest path now has the number
+;; (lower-qudrant-edge-number + n)
+
+;; And thus the number needed to travel along the edge is
+;; abs(number - lower-quadrant-edge-number) + n
+
+(defn get-edge
+  (n)
+    (let*
+      (
+        ret (+ (* 2 n) 1)
+      )
+      (* ret ret)
+    )
+)
+
+(defn get-upper-edge-and-n-iter
+  (num n)
+    (let*
+      (
+        upper-edge (get-edge n)
+      )
+      (if
+        (>= upper-edge num)
+          (list upper-edge n)
+          (get-upper-edge-and-n-iter num (+ n 1))
+      )
+    )
+)
+
+(defn get-upper-edge-and-n
+  (num)
+    (get-upper-edge-and-n-iter num 0)
+)
+
+(defn get-lower-edge
+  (num lower-edge n)
+    (if (<= lower-edge num)
+      lower-edge
+      (let*
+        (
+          row-edge (* 2 n)
+        )
+        (get-lower-edge num (- lower-edge row-edge) n)
+      )
+    )
+)
+
+(defn abs
+  (n)
+    (if (< n 0)
+      (* n -1)
+      n
+    )
+)
+
+(defn distance-to-closest-path
+  (num lower-edge n)
+    (let*
+      (
+        closest-path-number (+ lower-edge n)
+        surplus-distance (- num closest-path-number)
+      )
+      (+ n (abs surplus-distance))
+    )
+)
+
+(defn manhattan-distance
+  (num)
+    (let*
+      (
+        upper-edge-and-n (get-upper-edge-and-n num)
+        upper-edge (nth upper-edge-and-n 0)
+        n (nth upper-edge-and-n 1)
+        lower-edge (get-lower-edge num upper-edge n)
+      )
+      (distance-to-closest-path num lower-edge n)
+    )
+)

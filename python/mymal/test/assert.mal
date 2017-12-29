@@ -1,0 +1,7 @@
+(defn assert
+  (actual expected test-name)
+    (if (not (= expected actual))
+      (throw (str test-name " failed! expected " expected " actual " actual))
+      (prn (str "Test-case " test-name " passed!"))
+    )
+)

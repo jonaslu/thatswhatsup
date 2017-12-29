@@ -1,0 +1,44 @@
+(load-file "experiments/circular.mal")
+(load-file "test/assert.mal")
+
+(assert
+  (manhattan-distance 1)
+  0
+  "manhattan 1"
+)
+
+(assert
+  (manhattan-distance 3)
+  2
+  "manhattan 2"
+)
+
+(assert
+  (manhattan-distance 8)
+  1
+  "manhattan 8"
+)
+
+(assert
+  (manhattan-distance 9)
+  2
+  "manhattan 9"
+)
+
+(assert
+  (manhattan-distance 12)
+  3
+  "manhattan 12"
+)
+
+(assert
+  (manhattan-distance 23)
+  2
+  "manhattan 23"
+)
+
+(assert
+  (manhattan-distance 1024)
+  31
+  "manhattan 1024"
+)
