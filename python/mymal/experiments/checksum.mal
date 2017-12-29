@@ -1,0 +1,44 @@
+;; For two numbers returns the number for which the comparator
+;; is true (e g 5 > 1 -> 5)
+(defn get-large-small
+  (new old comparator)
+    (if (comparator new old)
+      new
+      old
+    )
+)
+
+;; Returns the difference of the greatest and smallest numbers
+;; found in a list (e g '(1 2 3 5 9) -> 9 - 1 = 8
+(defn row-difference-iter
+  (big small lst)
+    (if (empty? lst)
+      (- big small)
+      (let*
+        (
+          head (first lst)
+          big (get-large-small head big >)
+          small (get-large-small head small <)
+        )
+          (row-difference-iter big small (rest lst))
+      )
+    )
+)
+
+;; Calculates the checksum by traversing a list of lists
+;; getting the largest and smallest difference of each
+;; row and sums them
+(defn get-checksum
+  (lst sum)
+    (if (empty? lst)
+      sum
+      (let*
+        (
+          head (first lst)
+          row-difference (row-difference-iter 1 9 head)
+          new-sum (+ sum row-difference)
+        )
+          (get-checksum (rest lst) new-sum)
+      )
+    )
+)
