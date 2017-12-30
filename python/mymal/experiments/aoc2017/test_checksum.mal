@@ -1,4 +1,4 @@
-(load-file "experiments/checksum.mal")
+(load-file "experiments/aoc2017/checksum.mal")
 (load-file "test/assert.mal")
 
 (def! test-data

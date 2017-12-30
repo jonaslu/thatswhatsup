@@ -1,4 +1,4 @@
-(load-file "experiments/circular.mal")
+(load-file "experiments/aoc2017/circular.mal")
 (load-file "test/assert.mal")
 
 (assert
