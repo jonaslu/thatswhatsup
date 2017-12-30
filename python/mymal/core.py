@@ -268,7 +268,8 @@ core_functions = {
     'dissoc': __dissoc,
     'contains?': lambda hashmap, key: key in hashmap,
     'keys': lambda hashmap: list(hashmap.keys()),
-    'vals': lambda hashmap: list(hashmap.values())
+    'vals': lambda hashmap: list(hashmap.values()),
+    'split-str': lambda string, separator=None: string.split(separator)
 }
 
 
