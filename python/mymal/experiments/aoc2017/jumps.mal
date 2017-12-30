@@ -1,0 +1,82 @@
+;; Take a list of instructions
+;; Get the *pc jump offset
+;; (nth jump-list pc)
+;; Inc the *pc with one
+;; (+ pc jump-offset)
+;; Until (>= pc (count list))
+
+(defn get-n-items-iter
+  (lst n cur-pos res)
+    (if (> cur-pos n)
+      res
+      (let*
+        (
+          next-pos (+ 1 cur-pos)
+          next-res (concat res (list (first lst)))
+          next-lst (rest lst)
+        )
+        (get-n-items-iter next-lst n next-pos next-res)
+      )
+    )
+)
+
+(defn get-n-items
+  (lst n)
+    (if (> n (count lst))
+      (throw (str "Index is out of bounds " n " list length " (count lst)))
+      (get-n-items-iter lst n 0 '())
+    )
+)
+
+(defn get-n-last-items
+  (lst n)
+    (if (= n (count lst))
+      '()
+      (concat
+        (list (nth lst n))
+        (get-n-last-items lst (+ 1 n))
+      )
+    )
+)
+
+;; Sets a new item in a new list and returns it
+;; usage (set-item-in-list '(1 2 3 4) 0 54)) -> '(54 2 3 4)
+(defn set-item-in-list
+  (lst pos new-item)
+    (let*
+      (
+        first-items-pos (- pos 1)
+        first-items (get-n-items lst first-items-pos)
+        last-item-pos (+ 1 pos)
+        last-items (get-n-last-items lst last-item-pos)
+      )
+      (concat first-items (list new-item) last-items)
+    )
+)
+
+(defn get-number-of-jumps-iter
+  (code-block pc no-of-jumps)
+    (let*
+      (
+        code-block-size (count code-block)
+        pc-pointer-value (nth code-block pc)
+        next-instruction (+ pc pc-pointer-value)
+        pc-out-of-bounds (or (< next-instruction 0) (>= next-instruction code-block-size))
+        incremented-list-value (+ 1 pc-pointer-value)
+        new-code-block (set-item-in-list code-block pc incremented-list-value)
+      )
+      (if pc-out-of-bounds
+        (+ 1 no-of-jumps)
+        (get-number-of-jumps-iter
+          new-code-block
+          next-instruction
+          (+ 1 no-of-jumps)
+        )
+      )
+    )
+)
+
+(defn get-number-of-jumps
+  (code-block)
+    (get-number-of-jumps-iter code-block 0 0)
+)

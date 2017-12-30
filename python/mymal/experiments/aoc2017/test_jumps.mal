@@ -1,0 +1,26 @@
+(load-file "experiments/aoc2017/jumps.mal")
+(load-file "test/assert.mal")
+
+(assert
+  (get-number-of-jumps '(0))
+  2
+  "2 number of jumps"
+)
+
+(assert
+  (get-number-of-jumps '(1))
+  1
+  "1 number of jumps"
+)
+
+(assert
+  (get-number-of-jumps '(0 -1))
+  4
+  "4 number of jumps"
+)
+
+(assert
+  (get-number-of-jumps '(0 3 0 1 -3))
+  5
+  "5 number of jumps"
+)
