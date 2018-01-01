@@ -12,8 +12,14 @@ class MalSymbol:
         return False
 
 class MalVector(list):
-    pass
+    def __init__(self, *args):
+        super(MalVector, self).__init__(*args)
+        self.meta = None
 
+class MalList(list):
+    def __init__(self, *args):
+        super(MalList, self).__init__(*args)
+        self.meta = None
 
 class Atom:
     def __init__(self, value):
@@ -27,6 +33,7 @@ class ResultingLambda:
         self.lambda_params = lambda_params
         self.env = lambda_env
         self.is_macro = False
+        self.meta = None
 
     def __repr__(self):
         return "Lambda body: " + str(self.lambda_body)

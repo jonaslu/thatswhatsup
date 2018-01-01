@@ -13,7 +13,21 @@
       (list 'if (first xs)
         (first (rest xs))
         (cons 'cond (rest (rest xs)))
-        ;; Index out of bounds
+        ;; Index out of bounds if cond pair is not evenly divisible
+      )
+    )
+  )
+)
+
+(def! *gensym-counter* (atom 0))
+
+(def! gensym
+  (fn* []
+    (symbol
+      (str "G__"
+        (swap! *gensym-counter*
+          (fn* [x] (+ 1 x))
+        )
       )
     )
   )
@@ -21,15 +35,20 @@
 
 (defmacro! or
   (fn* (& xs)
-    (if (not (empty? xs))
-      (list
-        'if (first xs)
-          (first xs)
-          (list
-            'if (empty? (rest xs))
-            false
-            (cons 'or (rest xs))
+    (if (empty? xs)
+      nil
+      (if (= 1 (count xs))
+        (first xs)
+        (let*
+          (condvar (gensym))
+          `(let*
+            (~condvar ~(first xs))
+            (if ~condvar
+              ~condvar
+              (or ~@(rest xs))
+            )
           )
+        )
       )
     )
   )

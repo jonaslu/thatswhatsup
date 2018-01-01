@@ -1,3 +1,6 @@
+import copy
+import time
+
 import printer
 import reader
 from mal_types import *
@@ -58,6 +61,9 @@ def __equals(item1, item2):
         else:
             return False
     else:
+        if type(item1) != type(item2):
+            return False
+
         return item1 == item2
 
 
@@ -198,7 +204,8 @@ def __apply(func, *rest):
 
 def __get_hashmap(hashmap, key):
     if hashmap and type(hashmap) is dict:
-        return hashmap[key]
+        if key in hashmap:
+            return hashmap[key]
 
     return None
 
@@ -210,6 +217,7 @@ def __assoc(hashmap, *keyvalues):
 
     return ret_val
 
+
 def __dissoc(hashmap, *remove_keys):
     ret_val = dict(hashmap)
     for key in remove_keys:
@@ -217,6 +225,52 @@ def __dissoc(hashmap, *remove_keys):
             del ret_val[key]
 
     return ret_val
+
+
+def __readline(user_prompt):
+    try:
+        user_input = input(user_prompt)
+        return user_input
+    except EOFError:
+        return None
+
+
+def __meta(value):
+    if (type(value) is ResultingLambda or
+            type(value) is MalVector):
+
+        return value.meta
+
+    return None
+
+
+def __with_meta(value, meta_value):
+    new_copy = copy.deepcopy(value)
+    new_copy.meta = meta_value
+    return new_copy
+
+
+def __conj(*lst):
+    if type(lst[0]) is list:
+        rest = list(lst[1:])
+        rest.reverse()
+        return [*rest, *lst[0]]
+
+    if type(lst[0]) is MalVector:
+        rest = list(lst[1:])
+        return MalVector([*lst[0], *rest])
+
+
+def __seq(value):
+    if not value:
+        return None
+
+    if type(value) is str:
+        return list(value)
+
+    if isinstance(value, list):
+        return list(value)
+
 
 core_functions = {
     '+': lambda a, b: a + b,
@@ -269,7 +323,17 @@ core_functions = {
     'contains?': lambda hashmap, key: key in hashmap,
     'keys': lambda hashmap: list(hashmap.keys()),
     'vals': lambda hashmap: list(hashmap.values()),
-    'split-str': lambda string, separator=None: string.split(separator)
+    'split-str': lambda string, separator=None: string.split(separator),
+    'readline': __readline,
+    'meta': __meta,
+    'with-meta': __with_meta,
+    'string?': lambda value: type(value) is str and not __is_keyword(value),
+    'number?': lambda value: type(value) is int,
+    'fn?': lambda value: callable(value) or (type(value) is ResultingLambda and not value.is_macro),
+    'macro?': lambda value: type(value) is ResultingLambda and value.is_macro,
+    'conj': __conj,
+    'seq': __seq,
+    'time-ms': lambda: time.time() * 1000
 }
 
 

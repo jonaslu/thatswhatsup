@@ -1,2 +1,2 @@
 #! /bin/bash
-python step9_try.py $@
+python stepA_mal.py $@

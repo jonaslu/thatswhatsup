@@ -92,9 +92,9 @@ def read_atom(reader):
     is_string_match = is_string_regex.match(current_token)
     if is_string_match:
         unescaped_string = is_string_match.group(1)
+        new_line_escaped = re.sub(r"([^\\]{1}|^)\\n", r"\1\n", unescaped_string)
         return (
-            unescaped_string
-            .replace("\\n", "\n")
+            new_line_escaped
             .replace("\\\\", "\\")
             .replace("\\\"", "\"")
         )
@@ -132,6 +132,11 @@ def read_form(reader):
     elif(next_token == "'"):
         reader.next()
         return [MalSymbol("quote"), read_form(reader)]
+    elif(next_token == "^"):
+        reader.next()
+        meta = read_form(reader)
+        function = read_form(reader)
+        return [MalSymbol("with-meta"), function, meta]
     elif(next_token == "`"):
         reader.next()
         return [MalSymbol("quasiquote"), read_form(reader)]
