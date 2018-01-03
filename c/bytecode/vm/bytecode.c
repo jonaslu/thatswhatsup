@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #define RETURN 0
 #define PUSH_CONST 1
@@ -26,7 +28,7 @@ typedef struct Object {
   Type type;
 
   union {
-    int value;
+    int64_t value;
     CodeBlock* codeBlock;
   };
 } Object;
@@ -47,6 +49,8 @@ typedef struct {
 
   int currentFrame;
 } VM;
+
+static int error = 0;
 
 static void pushStackValue(StackFrame* currentStackFrame, Object* value) {
   currentStackFrame->slots[currentStackFrame->currentStackSlot++] = value;
@@ -113,21 +117,33 @@ static void interpret(VM* vm) {
       Object* value2 = popStackValue(currentStackFrame);
 
       if (value1->type == TYPE_INT && value2->type == TYPE_INT) {
-        Object* addedValue = malloc(sizeof(Object));
+        int64_t val1 = value1->value;
+        int64_t val2 = value2->value;
 
-        addedValue->type = TYPE_INT;
-        addedValue->value = value1->value + value2->value;
+        if ((val1 > 0 && val2 > INT64_MAX - val1) ||
+            (val1 < 0 && val2 < INT64_MAX - val1)) {
 
-        pushStackValue(currentStackFrame, addedValue);
+          error = 1;
+          return;
+
+        } else {
+          Object* addedValue = malloc(sizeof(Object));
+
+          addedValue->type = TYPE_INT;
+          addedValue->value = val1 + val2;
+
+          pushStackValue(currentStackFrame, addedValue);
+        }
       }
-      // TODO - error on non-addable types
     }
 
     if (opcode == PRINT) {
       Object* argument = popStackValue(currentStackFrame);
 
       // TODO Switch on type of argument when printing
-      printf("%d", argument->value);
+      if (argument->type == TYPE_INT) {
+        printf("%" PRIu64, argument->value);
+      }
     }
 
     if (opcode == CALL) {
@@ -178,11 +194,16 @@ void run(CodeBlock* rootCodeBlock) {
 
   interpret(vm);
   closeVM(vm);
+
+  // Check error-code
+  if (error > 0) {
+    printf("Error %d caught, terminating!", error);
+  }
 }
 
 static void printIntType(Object* intType) {
   printf("TYPE_INT\n");
-  printf("Int value %d\n", intType->value);
+  printf("Int value %" PRIu64 "\n", intType->value);
 }
 
 void print_code_block(CodeBlock* codeBlock);
