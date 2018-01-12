@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "compile-unit.h"
+extern int scheme_entry();
 
 int main(void) {
   printf("%d", scheme_entry());
