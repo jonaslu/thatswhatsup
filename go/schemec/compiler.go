@@ -3,11 +3,17 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
+
+func logAndQuit(err error) {
+	fmt.Printf("%+v", err)
+
+	os.Exit(1)
+}
 
 func assert(testcase string, expected string, actual string) bool {
 	if expected != actual {
@@ -20,13 +26,21 @@ func assert(testcase string, expected string, actual string) bool {
 }
 
 func compile(program string) string {
+	integerValue, err := strconv.Atoi(program)
+
+	if err != nil {
+		logAndQuit(err)
+	}
+
+	writeValue := strconv.Itoa(integerValue << 2)
+
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
 
 	if err != nil {
-		log.Fatal(err)
+		logAndQuit(err)
 	}
 
-	runcode := strings.Replace(string(content), "[insert]", "movl $"+program+", %eax", 1)
+	runcode := strings.Replace(string(content), "[insert]", "movl $"+writeValue+", %eax", 1)
 
 	return runcode
 }
@@ -36,7 +50,7 @@ func writeAssemblyFile(runcode string) string {
 	file, err := os.Create(assemblyFilePath)
 
 	if err != nil {
-		log.Fatal(err)
+		logAndQuit(err)
 	}
 
 	file.WriteString(runcode)
@@ -51,7 +65,7 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 	_, err := gccBinaryCmd.Output()
 
 	if err != nil {
-		log.Fatal(err)
+		logAndQuit(err)
 	}
 
 	return binaryName
@@ -63,7 +77,7 @@ func captureBinaryOutput(binaryFilePath string) string {
 	result, err := compiledBinaryOutput.Output()
 
 	if err != nil {
-		log.Fatal(err)
+		logAndQuit(err)
 	}
 
 	return string(result)
@@ -75,7 +89,7 @@ func runTest(testname string, program string, output string) bool {
 	binaryFilePath := makeRunCodeBinary(assemblyFilePath)
 	result := captureBinaryOutput(binaryFilePath)
 
-	return assert("Output to equal 42", output, result)
+	return assert(testname, output, result)
 }
 
 func runIntegerTests() {
