@@ -36,6 +36,7 @@ func TestSplitOnInteger(t *testing.T) {
 	testSplit(t, "1234", "1234")
 	testSplit(t, "1", "1")
 	testSplit(t, "0", "0")
+	testSplit(t, "-1", "-1")
 }
 
 func TestSplitOnComment(t *testing.T) {
