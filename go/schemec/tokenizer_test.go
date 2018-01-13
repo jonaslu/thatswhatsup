@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func testSplit(t *testing.T, program string, matches ...string) {
-	result := split(program)
+func testTokenize(t *testing.T, program string, matches ...string) {
+	result := tokenize(program)
 
 	for num, match := range matches {
 		if result[num] != match {
@@ -14,36 +14,36 @@ func testSplit(t *testing.T, program string, matches ...string) {
 	}
 }
 
-func TestSplitOnBoolean(t *testing.T) {
-	testSplit(t, "true", "true")
-	testSplit(t, "false", "false")
-	testSplit(t, "true false", "true", "false")
+func TestTokenizeOnBoolean(t *testing.T) {
+	testTokenize(t, "true", "true")
+	testTokenize(t, "false", "false")
+	testTokenize(t, "true false", "true", "false")
 }
 
-func TestSplitOnList(t *testing.T) {
-	testSplit(t, "(", "(")
-	testSplit(t, ")", ")")
-	testSplit(t, "(   )", "(", ")")
+func TestTokenizeOnList(t *testing.T) {
+	testTokenize(t, "(", "(")
+	testTokenize(t, ")", ")")
+	testTokenize(t, "(   )", "(", ")")
 }
 
-func TestSplitOnChar(t *testing.T) {
-	testSplit(t, "\\#m", "\\#m")
-	testSplit(t, "\\#A", "\\#A")
-	testSplit(t, "\\#0", "\\#0")
+func TestTokenizeOnChar(t *testing.T) {
+	testTokenize(t, "\\#m", "\\#m")
+	testTokenize(t, "\\#A", "\\#A")
+	testTokenize(t, "\\#0", "\\#0")
 }
 
-func TestSplitOnInteger(t *testing.T) {
-	testSplit(t, "1234", "1234")
-	testSplit(t, "1", "1")
-	testSplit(t, "0", "0")
-	testSplit(t, "-1", "-1")
+func TestTokenizeOnInteger(t *testing.T) {
+	testTokenize(t, "1234", "1234")
+	testTokenize(t, "1", "1")
+	testTokenize(t, "0", "0")
+	testTokenize(t, "-1", "-1")
 }
 
-func TestSplitOnComment(t *testing.T) {
-	testSplit(t, ";;  Whatever\n", ";;  Whatever")
+func TestTokenizeOnComment(t *testing.T) {
+	testTokenize(t, ";;  Whatever\n", ";;  Whatever")
 }
 
-func TestSplitOnAssorted(t *testing.T) {
-	testSplit(t, "false true 0 \\#m", "false", "true", "0", "\\#m")
-	testSplit(t, "(if true ;;  Whatever\n", "(", "if", "true", ";;  Whatever")
+func TestTokenizeOnAssorted(t *testing.T) {
+	testTokenize(t, "false true 0 \\#m", "false", "true", "0", "\\#m")
+	testTokenize(t, "(if true ;;  Whatever\n", "(", "if", "true", ";;  Whatever")
 }
