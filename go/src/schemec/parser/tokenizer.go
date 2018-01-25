@@ -85,14 +85,14 @@ func parse(tokens []string) ([]string, interface{}, error) {
 	return remainingTokens, Symbol{nextToken}, nil
 }
 
-func filter(vs []string, f func(string) bool) []string {
-	vsf := make([]string, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
+func filter(strings []string, shouldInclude func(string) bool) []string {
+	result := []string{}
+	for _, str := range strings {
+		if shouldInclude(str) {
+			result = append(result, str)
 		}
 	}
-	return vsf
+	return result
 }
 
 // GetAst takes a string and produces an ast
