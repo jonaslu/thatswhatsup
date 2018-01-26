@@ -124,3 +124,7 @@ func TestGetAstMixedCases(t *testing.T) {
 	testGetAst(t, "   (+    2 3) ;; comment", []interface{}{Symbol{"+"}, 2, 3})
 	testGetAst(t, "   ((+    2 3) ;; comment", "End of list not found")
 }
+
+func TestGetAstFullPrograms(t *testing.T) {
+	testGetAst(t, "(do (if true\n(add +1 2)\n(+ 1 3)\n)\n)\n", []interface{}{Symbol{"do"}, []interface{}{Symbol{"if"}, true, []interface{}{Symbol{"add"}, 1, 2}, []interface{}{Symbol{"+"}, 1, 3}}})
+}
