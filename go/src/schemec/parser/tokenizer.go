@@ -8,40 +8,100 @@ import (
 	"strings"
 )
 
-// integer boolean char comment or identifier
-var re = regexp.MustCompile("0|[-]?[1-9][0-9]*|true|false|\\\\#[^\\s]|\\(|\\)|;[^\n]*|[^\\s\\(\\);]+")
-
-func tokenize(program string) []string {
-	return re.FindAllString(program, -1)
-}
-
 type (
-	// Symbol symbol ast value
-	Symbol struct {
-		value string
+	// SourceMarker contains the tokens matched starting and ending string
+	// index position in the given program string
+	SourceMarker struct {
+		startPos int
+		endPos   int
+	}
+
+	// Token represents a token in the given program string
+	Token struct {
+		value        string
+		sourceMarker SourceMarker
 	}
 )
 
-func peekToken(tokens []string) (string, []string) {
+// integer boolean char comment or identifier
+var re = regexp.MustCompile("0|[-]?[1-9][0-9]*|true|false|\\\\#[^\\s]|\\(|\\)|;[^\n]*|[^\\s\\(\\);]+")
+
+func isComment(value string) bool {
+	return strings.HasPrefix(value, ";")
+}
+
+func tokenize(program string) []Token {
+	allIndexes := re.FindAllStringIndex(program, -1)
+	allTokens := []Token{}
+
+	for _, pos := range allIndexes {
+		match := program[pos[0]:pos[1]]
+
+		if !isComment(match) {
+			allTokens = append(allTokens, Token{match, SourceMarker{pos[0], pos[1]}})
+		}
+	}
+
+	return allTokens
+}
+
+type (
+	// Symbol represents the ast type of anything that is not
+	// an integer, char or boolean
+	Symbol struct {
+		value        string
+		sourceMarker SourceMarker
+	}
+
+	// Integer ast type
+	Integer struct {
+		value        int
+		sourceMarker SourceMarker
+	}
+
+	// Boolean ast type
+	Boolean struct {
+		value        bool
+		sourceMarker SourceMarker
+	}
+
+	// Char (single character) ast type
+	Char struct {
+		value        rune
+		sourceMarker SourceMarker
+	}
+
+	// List ast type
+	List struct {
+		value        []interface{}
+		sourceMarker SourceMarker
+	}
+)
+
+func peekToken(tokens []Token) (Token, []Token) {
 	if len(tokens) == 0 {
-		return "", tokens
+		return Token{}, tokens
 	}
 
 	if len(tokens) == 1 {
-		return tokens[0], []string{}
+		return tokens[0], []Token{}
 	}
 
 	return tokens[0], tokens[1:]
 }
 
-func parseList(tokens []string) ([]string, []interface{}, error) {
+func parseList(tokens []Token) ([]Token, List, error) {
 	returnList := []interface{}{}
+	nextToken, _ := peekToken(tokens)
+	listStartPos := nextToken.sourceMarker.startPos
 
 	for len(tokens) > 0 {
 		nextToken, remainingTokens := peekToken(tokens)
 
-		if nextToken == ")" {
-			return remainingTokens, returnList, nil
+		if nextToken.value == ")" {
+			return remainingTokens,
+				List{returnList, SourceMarker{listStartPos, nextToken.sourceMarker.endPos}},
+				nil
 		}
 
 		remainingTokens, parseResult, err := parse(tokens)
@@ -54,45 +114,39 @@ func parseList(tokens []string) ([]string, []interface{}, error) {
 		tokens = remainingTokens
 	}
 
-	return nil, nil, errors.New("End of list not found")
+	// TODO Print nice error-message
+	return nil, List{}, errors.New("End of list not found")
 }
 
-func parse(tokens []string) ([]string, interface{}, error) {
+func parse(tokens []Token) ([]Token, interface{}, error) {
 	nextToken, remainingTokens := peekToken(tokens)
+	nextTokenValue := nextToken.value
+	sourceMarker := nextToken.sourceMarker
 
-	if nextToken == "(" {
+	if nextTokenValue == "(" {
 		return parseList(remainingTokens)
 	}
 
-	if strings.HasPrefix(nextToken, "\\#") {
-		// A rune - represents a char
-		return remainingTokens, []rune(nextToken)[2:3][0], nil
+	if strings.HasPrefix(nextTokenValue, "\\#") {
+		return remainingTokens,
+			Char{[]rune(nextTokenValue)[2:3][0], sourceMarker},
+			nil
 	}
 
-	if nextToken == "true" {
-		return remainingTokens, true, nil
+	if nextTokenValue == "true" {
+		return remainingTokens, Boolean{true, sourceMarker}, nil
 	}
 
-	if nextToken == "false" {
-		return remainingTokens, false, nil
+	if nextTokenValue == "false" {
+		return remainingTokens, Boolean{false, sourceMarker}, nil
 	}
 
-	intValue, err := strconv.Atoi(nextToken)
+	intValue, err := strconv.Atoi(nextTokenValue)
 	if err == nil {
-		return remainingTokens, intValue, nil
+		return remainingTokens, Integer{intValue, sourceMarker}, nil
 	}
 
-	return remainingTokens, Symbol{nextToken}, nil
-}
-
-func filter(strings []string, shouldInclude func(string) bool) []string {
-	result := []string{}
-	for _, str := range strings {
-		if shouldInclude(str) {
-			result = append(result, str)
-		}
-	}
-	return result
+	return remainingTokens, Symbol{nextTokenValue, sourceMarker}, nil
 }
 
 // GetAst takes a string and produces an ast
@@ -102,7 +156,6 @@ func GetAst(program string) (interface{}, error) {
 	}
 
 	tokens := tokenize(program)
-	tokens = filter(tokens, func(v string) bool { return !strings.HasPrefix(v, ";") })
 
 	if len(tokens) == 0 {
 		return nil, nil
@@ -115,6 +168,7 @@ func GetAst(program string) (interface{}, error) {
 	}
 
 	if len(tokens) > 0 {
+		// TODO Print error context (use SourceMarker)
 		return nil, errors.New("Unrecognized symbol")
 	}
 
