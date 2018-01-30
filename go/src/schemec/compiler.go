@@ -15,16 +15,6 @@ func logAndQuit(err error) {
 	os.Exit(1)
 }
 
-func assert(testcase string, expected string, actual string) bool {
-	if expected != actual {
-		fmt.Println("Tescase " + testcase + " failed. Expected " + expected + " actual " + actual)
-
-		return false
-	}
-
-	return true
-}
-
 func compile(program string) string {
 	integerValue, err := strconv.Atoi(program)
 
@@ -71,43 +61,10 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 	return binaryName
 }
 
-func captureBinaryOutput(binaryFilePath string) string {
-	compiledBinaryOutput := exec.Command(binaryFilePath)
-
-	result, err := compiledBinaryOutput.Output()
-
-	if err != nil {
-		logAndQuit(err)
-	}
-
-	return string(result)
-}
-
-func runTest(testname string, program string, output string) bool {
+func Compile(program string) string {
 	assembly := compile(program)
 	assemblyFilePath := writeAssemblyFile(assembly)
 	binaryFilePath := makeRunCodeBinary(assemblyFilePath)
-	result := captureBinaryOutput(binaryFilePath)
 
-	return assert(testname, output, result)
-}
-
-func runIntegerTests() {
-	fmt.Println("Running integer tests")
-
-	testsPassed := true
-
-	testsPassed = testsPassed && runTest("Outout to equal 42", "42", "42")
-	testsPassed = testsPassed && runTest("Outout to equal 666", "666", "666")
-	testsPassed = testsPassed && runTest("Outout to equal 0", "0", "0")
-
-	if testsPassed {
-		fmt.Println("OK")
-	} else {
-		fmt.Println("Fail")
-	}
-}
-
-func main() {
-	runIntegerTests()
+	return binaryFilePath
 }
