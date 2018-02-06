@@ -49,32 +49,32 @@ type (
 	// Symbol represents the ast type of anything that is not
 	// an integer, char or boolean
 	Symbol struct {
-		value        string
-		sourceMarker SourceMarker
+		Value        string
+		SourceMarker SourceMarker
 	}
 
 	// Integer ast type
 	Integer struct {
-		value        int
-		sourceMarker SourceMarker
+		Value        int
+		SourceMarker SourceMarker
 	}
 
 	// Boolean ast type
 	Boolean struct {
-		value        bool
-		sourceMarker SourceMarker
+		Value        bool
+		SourceMarker SourceMarker
 	}
 
 	// Char (single character) ast type
 	Char struct {
 		value        rune
-		sourceMarker SourceMarker
+		SourceMarker SourceMarker
 	}
 
 	// List ast type
 	List struct {
 		value        []interface{}
-		sourceMarker SourceMarker
+		SourceMarker SourceMarker
 	}
 )
 

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"schemec/parser"
 	"strconv"
 	"strings"
 )
@@ -16,13 +17,30 @@ func logAndQuit(err error) {
 }
 
 func compile(program string) string {
-	integerValue, err := strconv.Atoi(program)
+	ast, err := parser.GetAst(program)
 
 	if err != nil {
 		logAndQuit(err)
 	}
 
-	writeValue := strconv.Itoa(integerValue << 2)
+	var writeValue string
+
+	switch n := ast.(type) {
+	case parser.Integer:
+		integerValue := n.Value
+		writeValue = strconv.Itoa(integerValue << 2)
+
+	case parser.Boolean:
+		if n.Value {
+			writeValue = strconv.Itoa(1<<8 + 31)
+		} else {
+			writeValue = strconv.Itoa(31)
+		}
+
+	case parser.Symbol:
+
+	case parser.List:
+	}
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
 

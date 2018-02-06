@@ -32,3 +32,8 @@ func TestCompileIntegers(t *testing.T) {
 	runTest(t, "666", "666")
 	runTest(t, "0", "0")
 }
+
+func TestCompileBooleans(t *testing.T) {
+	runTest(t, "true", "true")
+	runTest(t, "false", "false")
+}
