@@ -18,6 +18,8 @@ func logAndQuit(err error) {
 
 // 0011111
 const booleanTag = 31
+const booleanShiftBits = 8
+
 
 // 00101111
 const emptyListTag = 47
@@ -38,9 +40,9 @@ func compile(program string) string {
 
 	case parser.Boolean:
 		if n.Value {
-			writeValue = strconv.Itoa(1<<8 + booleanTag)
+			writeValue = strconv.Itoa(1<<booleanShiftBits + booleanTag)
 		} else {
-			writeValue = strconv.Itoa(31)
+			writeValue = strconv.Itoa(booleanTag)
 		}
 
 	case parser.Symbol:
