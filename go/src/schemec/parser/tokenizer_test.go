@@ -140,7 +140,7 @@ func TestGetAstForBooleans(t *testing.T) {
 }
 
 func TestGetAstForChars(t *testing.T) {
-	charToken := makeTokenizeReturnValue("\\#m")
+	charToken := makeTokenizeReturnValue("#\\m")
 	testParseHelper(t, charToken, Char{'m', charToken[0].sourceMarker})
 }
 

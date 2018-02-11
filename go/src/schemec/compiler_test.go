@@ -41,4 +41,9 @@ func TestCompileBooleans(t *testing.T) {
 func TestCompileEmptyList(t *testing.T) {
 	runTest(t, "()", "()")
 }
+
+func TestCompileChar(t *testing.T) {
+	runTest(t, "#\\a", "#\\a")
+	runTest(t, "#\\1", "#\\1")
+	runTest(t, "#\\€", "#\\€")
 }

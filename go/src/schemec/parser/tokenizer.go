@@ -24,7 +24,7 @@ type (
 )
 
 // integer boolean char comment or identifier
-var re = regexp.MustCompile("0|[-]?[1-9][0-9]*|true|false|\\\\#[^\\s]|\\(|\\)|;[^\n]*|[^\\s\\(\\);]+")
+var re = regexp.MustCompile("0|[-]?[1-9][0-9]*|true|false|#\\\\[^\\s]|\\(|\\)|;[^\n]*|[^\\s\\(\\);]+")
 
 func isComment(value string) bool {
 	return strings.HasPrefix(value, ";")
@@ -67,7 +67,7 @@ type (
 
 	// Char (single character) ast type
 	Char struct {
-		value        rune
+		Value        rune
 		SourceMarker SourceMarker
 	}
 
@@ -127,7 +127,7 @@ func parse(tokens []Token) ([]Token, interface{}, error) {
 		return parseList(remainingTokens)
 	}
 
-	if strings.HasPrefix(nextTokenValue, "\\#") {
+	if strings.HasPrefix(nextTokenValue, "#\\") {
 		return remainingTokens,
 			Char{[]rune(nextTokenValue)[2:3][0], sourceMarker},
 			nil

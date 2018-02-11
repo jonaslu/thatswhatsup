@@ -20,6 +20,8 @@ func logAndQuit(err error) {
 const booleanTag = 31
 const booleanShiftBits = 8
 
+const charactersTag = 15
+const charactersShiftBits = 8
 
 // 00101111
 const emptyListTag = 47
@@ -45,12 +47,15 @@ func compile(program string) string {
 			writeValue = strconv.Itoa(booleanTag)
 		}
 
-	case parser.Symbol:
+	case parser.Char:
+		writeValue = strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag)
 
 	case parser.List:
 		if len(n.Value) == 0 {
 			writeValue = strconv.Itoa(emptyListTag)
 		}
+
+	case parser.Symbol:
 	}
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
