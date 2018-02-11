@@ -20,14 +20,14 @@ int main(void) {
   if ((result & int_bitmask) == int_tag) {
     result = result >> 2;
     printf("%d", result);
-  } else if ((result & rest_bitmask) == boolean_tag) {
+  } else if ((result & boolean_mask) == boolean_tag) {
     result = result >> 8;
     if (result == 1) {
       printf("true");
     } else {
       printf("false");
     }
-  } else if ((result & rest_bitmask) == empty_list) {
+  } else if (result == empty_list) {
     printf("nil");
   } else {
     printf("Unknown value type %d", result);
