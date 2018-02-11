@@ -37,3 +37,7 @@ func TestCompileBooleans(t *testing.T) {
 	runTest(t, "true", "true")
 	runTest(t, "false", "false")
 }
+
+func TestCompileEmptyList(t *testing.T) {
+	runTest(t, "()", "nil")
+}

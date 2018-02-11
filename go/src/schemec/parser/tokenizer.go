@@ -73,7 +73,7 @@ type (
 
 	// List ast type
 	List struct {
-		value        []interface{}
+		Value        []interface{}
 		SourceMarker SourceMarker
 	}
 )

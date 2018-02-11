@@ -16,6 +16,12 @@ func logAndQuit(err error) {
 	os.Exit(1)
 }
 
+// 0011111
+const booleanTag = 31
+
+// 00101111
+const emptyListTag = 47
+
 func compile(program string) string {
 	ast, err := parser.GetAst(program)
 
@@ -32,7 +38,7 @@ func compile(program string) string {
 
 	case parser.Boolean:
 		if n.Value {
-			writeValue = strconv.Itoa(1<<8 + 31)
+			writeValue = strconv.Itoa(1<<8 + booleanTag)
 		} else {
 			writeValue = strconv.Itoa(31)
 		}
@@ -40,6 +46,9 @@ func compile(program string) string {
 	case parser.Symbol:
 
 	case parser.List:
+		if len(n.Value) == 0 {
+			writeValue = strconv.Itoa(emptyListTag)
+		}
 	}
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
@@ -79,6 +88,8 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 	return binaryName
 }
 
+// Compile takes a program as a string and returns the filepath
+// of a runnable binary with the program compiled
 func Compile(program string) string {
 	assembly := compile(program)
 	assemblyFilePath := writeAssemblyFile(assembly)
