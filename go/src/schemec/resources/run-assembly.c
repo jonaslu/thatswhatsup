@@ -28,7 +28,7 @@ int main(void) {
       printf("false");
     }
   } else if (result == empty_list) {
-    printf("nil");
+    printf("()");
   } else {
     printf("Unknown value type %d", result);
   }

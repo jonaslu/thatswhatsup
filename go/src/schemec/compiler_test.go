@@ -39,5 +39,6 @@ func TestCompileBooleans(t *testing.T) {
 }
 
 func TestCompileEmptyList(t *testing.T) {
-	runTest(t, "()", "nil")
+	runTest(t, "()", "()")
+}
 }
