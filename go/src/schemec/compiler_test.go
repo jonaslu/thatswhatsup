@@ -47,3 +47,9 @@ func TestCompileChar(t *testing.T) {
 	runTest(t, "#\\1", "#\\1")
 	runTest(t, "#\\€", "#\\€")
 }
+
+func TestCompileUnaryOperator(t *testing.T) {
+	runTest(t, "(add1 0)", "1")
+	runTest(t, "(add1 1)", "2")
+	runTest(t, "(add1 665)", "666")
+}

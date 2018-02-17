@@ -18,7 +18,6 @@ extern int scheme_entry();
 int main(void) {
   int result = scheme_entry();
 
-
   if ((result & int_bitmask) == int_tag) {
     result = result >> 2;
     printf("%d", result);

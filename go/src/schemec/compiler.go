@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -26,6 +27,63 @@ const charactersShiftBits = 8
 // 00101111
 const emptyListTag = 47
 
+func getIntegerImmediateRepresentation(integerValue int) string {
+	return strconv.Itoa(integerValue << 2)
+}
+
+func getImmediateValue(ast interface{}) (string, error) {
+	switch n := ast.(type) {
+
+	case parser.Integer:
+		integerValue := n.Value
+		return getIntegerImmediateRepresentation(integerValue), nil
+
+	case parser.Boolean:
+		if n.Value {
+			return strconv.Itoa(1<<booleanShiftBits + booleanTag), nil
+		}
+
+		return strconv.Itoa(booleanTag), nil
+
+	case parser.Char:
+		return strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag), nil
+
+	default:
+		// !! TODO !! Fix pretty error-printing
+		return "", errors.New("Not an immediate value")
+	}
+}
+
+func storeImmediateRepresentationInEax(immediateRepresentation string) string {
+	return "movl $" + immediateRepresentation + ", %eax"
+}
+
+func parseList(list parser.List) ([]string, error) {
+	listValues := list.Value
+
+	if len(listValues) == 0 {
+		return []string{storeImmediateRepresentationInEax(strconv.Itoa(emptyListTag))}, nil
+	}
+
+	if n, ok := listValues[0].(parser.Symbol); ok {
+		switch n.Value {
+		case "add1":
+			// !! TODO !! Handle error
+			immediateValue, _ := getImmediateValue(listValues[1])
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+
+			addOneImmediateValue := getIntegerImmediateRepresentation(1)
+			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
+
+			addOneToValueInstructions := []string{immediateValueStoredInEax, addOneToValueInEax}
+			return addOneToValueInstructions, nil
+		}
+	}
+
+	// TODO Fix pretty error-printing
+	return nil, errors.New("Expected symbol at position")
+}
+
 func compile(program string) string {
 	ast, err := parser.GetAst(program)
 
@@ -36,26 +94,15 @@ func compile(program string) string {
 	var writeValue string
 
 	switch n := ast.(type) {
-	case parser.Integer:
-		integerValue := n.Value
-		writeValue = strconv.Itoa(integerValue << 2)
-
-	case parser.Boolean:
-		if n.Value {
-			writeValue = strconv.Itoa(1<<booleanShiftBits + booleanTag)
-		} else {
-			writeValue = strconv.Itoa(booleanTag)
-		}
-
-	case parser.Char:
-		writeValue = strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag)
-
 	case parser.List:
-		if len(n.Value) == 0 {
-			writeValue = strconv.Itoa(emptyListTag)
-		}
+		var instructions []string
+		instructions, err = parseList(n)
+		writeValue = strings.Join(instructions, "\n")
 
-	case parser.Symbol:
+	default:
+		// !! TODO !! Handle error
+		immediateRepresentation, _ := getImmediateValue(ast)
+		writeValue = storeImmediateRepresentationInEax(immediateRepresentation)
 	}
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
@@ -64,7 +111,9 @@ func compile(program string) string {
 		logAndQuit(err)
 	}
 
-	runcode := strings.Replace(string(content), "[insert]", "movl $"+writeValue+", %eax", 1)
+	fmt.Println(writeValue)
+
+	runcode := strings.Replace(string(content), "[insert]", writeValue, 1)
 
 	return runcode
 }
