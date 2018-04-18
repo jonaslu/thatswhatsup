@@ -82,10 +82,19 @@ func parseList(list parser.List) ([]string, error) {
 			immediateValue, _ := getImmediateValue(listValues[1])
 			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
 
-			shiftBy6Bits := "sall $6, %eax"
+			shiftUpBy6Bits := "sall $6, %eax"
 			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
 
-			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftBy6Bits, setCharTag}
+			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftUpBy6Bits, setCharTag}
+			return charToIntegerInstructions, nil
+
+		case "integer->char":
+			immediateValue, _ := getImmediateValue(listValues[1])
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+
+			shiftByDown6Bits := "sarl $6, %eax"
+
+			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftByDown6Bits}
 			return charToIntegerInstructions, nil
 		}
 	}

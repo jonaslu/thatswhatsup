@@ -58,3 +58,8 @@ func TestCompileCharToIntegerOperator(t *testing.T) {
 	runTest(t, "(char->integer 65)", "#\\A")
 	runTest(t, "(char->integer 97)", "#\\a")
 }
+
+func TestCompileIntegerToCharOperator(t *testing.T) {
+	runTest(t, "(integer->char #\\A)", "65")
+	runTest(t, "(integer->char #\\a)", "97")
+}
