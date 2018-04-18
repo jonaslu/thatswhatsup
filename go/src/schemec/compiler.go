@@ -77,6 +77,16 @@ func parseList(list parser.List) ([]string, error) {
 
 			addOneToValueInstructions := []string{immediateValueStoredInEax, addOneToValueInEax}
 			return addOneToValueInstructions, nil
+
+		case "char->integer":
+			immediateValue, _ := getImmediateValue(listValues[1])
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+
+			shiftBy6Bits := "sall $6, %eax"
+			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
+
+			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftBy6Bits, setCharTag}
+			return charToIntegerInstructions, nil
 		}
 	}
 

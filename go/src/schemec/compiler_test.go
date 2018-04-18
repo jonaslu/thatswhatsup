@@ -48,8 +48,13 @@ func TestCompileChar(t *testing.T) {
 	runTest(t, "#\\€", "#\\€")
 }
 
-func TestCompileUnaryOperator(t *testing.T) {
+func TestCompileAddOperator(t *testing.T) {
 	runTest(t, "(add1 0)", "1")
 	runTest(t, "(add1 1)", "2")
 	runTest(t, "(add1 665)", "666")
+}
+
+func TestCompileCharToIntegerOperator(t *testing.T) {
+	runTest(t, "(char->integer 65)", "#\\A")
+	runTest(t, "(char->integer 97)", "#\\a")
 }
