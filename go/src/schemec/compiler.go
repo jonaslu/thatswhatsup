@@ -102,7 +102,21 @@ func parseList(list parser.List) ([]string, error) {
 
 			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftByDown6Bits}
 			return charToIntegerInstructions, nil
+
+		case "null?":
+			emptyListStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+
+			compareWithEmptyList := "cmpl $" + strconv.Itoa(emptyListTag) + ", %eax"
+			zeroEax := "movl $0, %eax"
+			setLowBitOfEaxToOneIfEqual := "sete %al"
+			shiftUpby7Bits := "sall $7, %eax"
+			setBooleanTag := "orl $31, %eax"
+
+			checkIfNullInstructions := []string{emptyListStoredInEax, compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
+
+			return checkIfNullInstructions, nil
 		}
+
 	}
 
 	// TODO Fix pretty error-printing
