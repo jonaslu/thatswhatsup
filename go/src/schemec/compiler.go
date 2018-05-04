@@ -19,7 +19,7 @@ func logAndQuit(err error) {
 
 // 0011111
 const booleanTag = 31
-const booleanShiftBits = 8
+const booleanShiftBits = 7
 
 const charactersTag = 15
 const charactersShiftBits = 8
@@ -48,6 +48,13 @@ func getImmediateValue(ast interface{}) (string, error) {
 	case parser.Char:
 		return strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag), nil
 
+	case parser.List:
+		if len(n.Value) == 0 {
+			return strconv.Itoa(emptyListTag), nil
+		}
+
+		return "", errors.New("Not an immediate value")
+
 	default:
 		// !! TODO !! Fix pretty error-printing
 		return "", errors.New("Not an immediate value")
@@ -66,11 +73,12 @@ func parseList(list parser.List) ([]string, error) {
 	}
 
 	if n, ok := listValues[0].(parser.Symbol); ok {
+		// !! TODO !! Handle error
+		firstArgumentImmediateValue, _ := getImmediateValue(listValues[1])
+
 		switch n.Value {
 		case "add1":
-			// !! TODO !! Handle error
-			immediateValue, _ := getImmediateValue(listValues[1])
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
 
 			addOneImmediateValue := getIntegerImmediateRepresentation(1)
 			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
@@ -79,8 +87,7 @@ func parseList(list parser.List) ([]string, error) {
 			return addOneToValueInstructions, nil
 
 		case "char->integer":
-			immediateValue, _ := getImmediateValue(listValues[1])
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
 
 			shiftUpBy6Bits := "sall $6, %eax"
 			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
@@ -89,8 +96,7 @@ func parseList(list parser.List) ([]string, error) {
 			return charToIntegerInstructions, nil
 
 		case "integer->char":
-			immediateValue, _ := getImmediateValue(listValues[1])
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(immediateValue)
+			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
 
 			shiftByDown6Bits := "sarl $6, %eax"
 

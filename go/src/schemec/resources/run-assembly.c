@@ -22,7 +22,7 @@ int main(void) {
     result = result >> 2;
     printf("%d", result);
   } else if ((result & boolean_mask) == boolean_tag) {
-    result = result >> 8;
+    result = result >> 7;
     if (result == 1) {
       printf("true");
     } else {
