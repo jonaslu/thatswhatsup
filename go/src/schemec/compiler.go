@@ -127,6 +127,17 @@ func parseList(list parser.List) ([]string, error) {
 
 			checkIfZeroInstructions := append([]string{storeFirstValueInEax}, compareIfEaxContainsValue(zeroImmedateValue)...)
 			return checkIfZeroInstructions, nil
+
+		case "not":
+			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			shiftByDown7Bytes := "sarl $7, %eax"
+			xorWithOne := "xorl $1, %eax"
+
+			shiftUpby7Bits := "sall $7, %eax"
+			setBooleanTag := "orl $31, %eax"
+
+			notInstructions := []string{storeFirstValueInEax, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag}
+			return notInstructions, nil
 		}
 	}
 

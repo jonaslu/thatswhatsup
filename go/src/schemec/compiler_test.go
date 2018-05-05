@@ -73,3 +73,8 @@ func TestCompileCheckIfZero(t *testing.T) {
 	runTest(t, "(zero? 0)", "true")
 	runTest(t, "(zero? 1)", "false")
 }
+
+func TestCompileNot(t *testing.T) {
+	runTest(t, "(not false)", "true")
+	runTest(t, "(not true)", "false")
+}
