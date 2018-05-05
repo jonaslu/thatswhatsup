@@ -65,6 +65,17 @@ func storeImmediateRepresentationInEax(immediateRepresentation string) string {
 	return "movl $" + immediateRepresentation + ", %eax"
 }
 
+func compareIfEaxContainsValue(compareValue string) []string {
+	compareWithEmptyList := "cmpl $" + compareValue + ", %eax"
+	zeroEax := "movl $0, %eax"
+	setLowBitOfEaxToOneIfEqual := "sete %al"
+
+	shiftUpby7Bits := "sall $7, %eax"
+	setBooleanTag := "orl $31, %eax"
+
+	return []string{compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
+}
+
 func parseList(list parser.List) ([]string, error) {
 	listValues := list.Value
 
@@ -104,19 +115,19 @@ func parseList(list parser.List) ([]string, error) {
 			return charToIntegerInstructions, nil
 
 		case "null?":
-			emptyListStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
 
-			compareWithEmptyList := "cmpl $" + strconv.Itoa(emptyListTag) + ", %eax"
-			zeroEax := "movl $0, %eax"
-			setLowBitOfEaxToOneIfEqual := "sete %al"
-			shiftUpby7Bits := "sall $7, %eax"
-			setBooleanTag := "orl $31, %eax"
-
-			checkIfNullInstructions := []string{emptyListStoredInEax, compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
-
+			checkIfNullInstructions := append([]string{storeFirstValueInEax}, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
 			return checkIfNullInstructions, nil
-		}
 
+		case "zero?":
+			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+
+			zeroImmedateValue := getIntegerImmediateRepresentation(0)
+
+			checkIfZeroInstructions := append([]string{storeFirstValueInEax}, compareIfEaxContainsValue(zeroImmedateValue)...)
+			return checkIfZeroInstructions, nil
+		}
 	}
 
 	// TODO Fix pretty error-printing
