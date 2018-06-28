@@ -27,6 +27,10 @@ const charactersShiftBits = 8
 // 00101111
 const emptyListTag = 47
 
+var spIndex = 0
+
+const stackWordSize = 4
+
 func getIntegerImmediateRepresentation(integerValue int) string {
 	return strconv.Itoa(integerValue << 2)
 }
@@ -138,11 +142,48 @@ func parseList(list parser.List) ([]string, error) {
 
 			notInstructions := []string{storeFirstValueInEax, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag}
 			return notInstructions, nil
+
+		case "+":
+			spIndex = spIndex - stackWordSize
+			secondArgumentInstructions := compileAst(listValues[2])
+			saveEaxOnStackInstruction := "movl %eax, " + strconv.Itoa(spIndex) + "(%rsp)"
+
+			firstArgumentInstructions := compileAst(listValues[1])
+			addStackInstructionsToEax := "addl " + strconv.Itoa(spIndex) + "(%rsp), %eax"
+			spIndex = spIndex + stackWordSize
+
+			instructions := []string{}
+			instructions = append(instructions, secondArgumentInstructions...)
+			instructions = append(instructions, saveEaxOnStackInstruction)
+			instructions = append(instructions, firstArgumentInstructions...)
+			instructions = append(instructions, addStackInstructionsToEax)
+
+			return instructions, nil
 		}
 	}
 
 	// TODO Fix pretty error-printing
 	return nil, errors.New("Expected symbol at position")
+}
+
+func compileAst(ast interface{}) []string {
+	switch n := ast.(type) {
+	case parser.List:
+		instructions, err := parseList(n)
+
+		if err != nil {
+			logAndQuit(err)
+		}
+
+		return instructions
+
+	default:
+		// !! TODO !! Handle error
+		immediateRepresentation, _ := getImmediateValue(ast)
+		writeValue := storeImmediateRepresentationInEax(immediateRepresentation)
+
+		return []string{writeValue}
+	}
 }
 
 func compile(program string) string {
@@ -152,19 +193,8 @@ func compile(program string) string {
 		logAndQuit(err)
 	}
 
-	var writeValue string
-
-	switch n := ast.(type) {
-	case parser.List:
-		var instructions []string
-		instructions, err = parseList(n)
-		writeValue = strings.Join(instructions, "\n")
-
-	default:
-		// !! TODO !! Handle error
-		immediateRepresentation, _ := getImmediateValue(ast)
-		writeValue = storeImmediateRepresentationInEax(immediateRepresentation)
-	}
+	instructions := compileAst(ast)
+	writeValue := strings.Join(instructions, "\n")
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
 

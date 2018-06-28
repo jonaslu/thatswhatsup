@@ -78,3 +78,15 @@ func TestCompileNot(t *testing.T) {
 	runTest(t, "(not false)", "true")
 	runTest(t, "(not true)", "false")
 }
+
+func TestCompileAddNumbers(t *testing.T) {
+	runTest(t, "(+ 1 1)", "2")
+}
+
+func TestCompileAddAdd1Numbers(t *testing.T) {
+	runTest(t, "(+ 1 (add1 1))", "3")
+}
+
+func TestCompileAddRecursiveNumbers(t *testing.T) {
+	runTest(t, "(+ 1 (+ 1 1))", "3")
+}
