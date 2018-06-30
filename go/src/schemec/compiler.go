@@ -88,59 +88,57 @@ func parseList(list parser.List) ([]string, error) {
 	}
 
 	if n, ok := listValues[0].(parser.Symbol); ok {
-		// !! TODO !! Handle error
-		firstArgumentImmediateValue, _ := getImmediateValue(listValues[1])
-
 		switch n.Value {
 		case "add1":
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
 
 			addOneImmediateValue := getIntegerImmediateRepresentation(1)
 			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
 
-			addOneToValueInstructions := []string{immediateValueStoredInEax, addOneToValueInEax}
-			return addOneToValueInstructions, nil
+			instructions := append(firstArgumentInstructions, addOneToValueInEax)
+			return instructions, nil
 
 		case "char->integer":
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
 
 			shiftUpBy6Bits := "sall $6, %eax"
 			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
 
-			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftUpBy6Bits, setCharTag}
+			charToIntegerInstructions := append(firstArgumentInstructions, shiftUpBy6Bits, setCharTag)
 			return charToIntegerInstructions, nil
 
 		case "integer->char":
-			immediateValueStoredInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
 
 			shiftByDown6Bits := "sarl $6, %eax"
 
-			charToIntegerInstructions := []string{immediateValueStoredInEax, shiftByDown6Bits}
+			charToIntegerInstructions := append(firstArgumentInstructions, shiftByDown6Bits)
 			return charToIntegerInstructions, nil
 
 		case "null?":
-			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
 
-			checkIfNullInstructions := append([]string{storeFirstValueInEax}, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
+			checkIfNullInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
 			return checkIfNullInstructions, nil
 
 		case "zero?":
-			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
 
 			zeroImmedateValue := getIntegerImmediateRepresentation(0)
 
-			checkIfZeroInstructions := append([]string{storeFirstValueInEax}, compareIfEaxContainsValue(zeroImmedateValue)...)
+			checkIfZeroInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(zeroImmedateValue)...)
 			return checkIfZeroInstructions, nil
 
 		case "not":
-			storeFirstValueInEax := storeImmediateRepresentationInEax(firstArgumentImmediateValue)
+			firstArgumentInstructions := compileAst(listValues[1])
+
 			shiftByDown7Bytes := "sarl $7, %eax"
 			xorWithOne := "xorl $1, %eax"
 
 			shiftUpby7Bits := "sall $7, %eax"
 			setBooleanTag := "orl $31, %eax"
 
-			notInstructions := []string{storeFirstValueInEax, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag}
+			notInstructions := append(firstArgumentInstructions, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag)
 			return notInstructions, nil
 
 		case "+":
