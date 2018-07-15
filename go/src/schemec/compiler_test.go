@@ -90,3 +90,6 @@ func TestCompileAddAdd1Numbers(t *testing.T) {
 func TestCompileAddRecursiveNumbers(t *testing.T) {
 	runTest(t, "(+ 1 (+ 1 1))", "3")
 }
+func TestLet(t *testing.T) {
+	runTest(t, "(let ((a 1) (b 4)) (+ a b))", "5")
+}

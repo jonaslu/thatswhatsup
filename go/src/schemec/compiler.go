@@ -13,7 +13,6 @@ import (
 
 func logAndQuit(err error) {
 	fmt.Printf("%+v", err)
-
 	os.Exit(1)
 }
 
@@ -27,9 +26,14 @@ const charactersShiftBits = 8
 // 00101111
 const emptyListTag = 47
 
-var spIndex = 0
+var spIndex = -4
 
-const stackWordSize = 4
+const stackWordSize = -4
+
+type StackVariable struct {
+	symbol  parser.Symbol
+	spIndex int
+}
 
 func getIntegerImmediateRepresentation(integerValue int) string {
 	return strconv.Itoa(integerValue << 2)
@@ -80,7 +84,9 @@ func compareIfEaxContainsValue(compareValue string) []string {
 	return []string{compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
 }
 
-func parseList(list parser.List) ([]string, error) {
+var topEnvironment map[string]StackVariable
+
+func parseList(list parser.List, environment map[string]StackVariable) ([]string, error) {
 	listValues := list.Value
 
 	if len(listValues) == 0 {
@@ -90,7 +96,7 @@ func parseList(list parser.List) ([]string, error) {
 	if n, ok := listValues[0].(parser.Symbol); ok {
 		switch n.Value {
 		case "add1":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			addOneImmediateValue := getIntegerImmediateRepresentation(1)
 			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
@@ -99,7 +105,7 @@ func parseList(list parser.List) ([]string, error) {
 			return instructions, nil
 
 		case "char->integer":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			shiftUpBy6Bits := "sall $6, %eax"
 			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
@@ -108,7 +114,7 @@ func parseList(list parser.List) ([]string, error) {
 			return charToIntegerInstructions, nil
 
 		case "integer->char":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			shiftByDown6Bits := "sarl $6, %eax"
 
@@ -116,13 +122,13 @@ func parseList(list parser.List) ([]string, error) {
 			return charToIntegerInstructions, nil
 
 		case "null?":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			checkIfNullInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
 			return checkIfNullInstructions, nil
 
 		case "zero?":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			zeroImmedateValue := getIntegerImmediateRepresentation(0)
 
@@ -130,7 +136,7 @@ func parseList(list parser.List) ([]string, error) {
 			return checkIfZeroInstructions, nil
 
 		case "not":
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			shiftByDown7Bytes := "sarl $7, %eax"
 			xorWithOne := "xorl $1, %eax"
@@ -142,11 +148,11 @@ func parseList(list parser.List) ([]string, error) {
 			return notInstructions, nil
 
 		case "+":
-			spIndex = spIndex - stackWordSize
-			secondArgumentInstructions := compileAst(listValues[2])
+			// spIndex = spIndex - stackWordSize
+			secondArgumentInstructions := compileAst(listValues[2], environment)
 			saveEaxOnStackInstruction := "movl %eax, " + strconv.Itoa(spIndex) + "(%rsp)"
 
-			firstArgumentInstructions := compileAst(listValues[1])
+			firstArgumentInstructions := compileAst(listValues[1], environment)
 			addStackInstructionsToEax := "addl " + strconv.Itoa(spIndex) + "(%rsp), %eax"
 			spIndex = spIndex + stackWordSize
 
@@ -157,6 +163,14 @@ func parseList(list parser.List) ([]string, error) {
 			instructions = append(instructions, addStackInstructionsToEax)
 
 			return instructions, nil
+
+		// case "-":
+		// case "*":
+		// case "=":
+		// case "char=?":
+		// (let ((a 1) (b 2)) body-expr body-expr)
+		case "let":
+			return compileLet(list, environment), nil
 		}
 	}
 
@@ -164,10 +178,10 @@ func parseList(list parser.List) ([]string, error) {
 	return nil, errors.New("Expected symbol at position")
 }
 
-func compileAst(ast interface{}) []string {
+func compileAst(ast interface{}, environment map[string]StackVariable) []string {
 	switch n := ast.(type) {
 	case parser.List:
-		instructions, err := parseList(n)
+		instructions, err := parseList(n, environment)
 
 		if err != nil {
 			logAndQuit(err)
@@ -175,8 +189,17 @@ func compileAst(ast interface{}) []string {
 
 		return instructions
 
+	case parser.Symbol:
+		stackVariable, variableFound := environment[n.Value]
+
+		if !variableFound {
+			logAndQuit(errors.New("Unknown variable"))
+		}
+
+		fetchStackPosToEax := "movl " + strconv.Itoa(stackVariable.spIndex) + "(%rsp), %eax"
+		return []string{fetchStackPosToEax}
+
 	default:
-		// !! TODO !! Handle error
 		immediateRepresentation, _ := getImmediateValue(ast)
 		writeValue := storeImmediateRepresentationInEax(immediateRepresentation)
 
@@ -191,7 +214,9 @@ func compile(program string) string {
 		logAndQuit(err)
 	}
 
-	instructions := compileAst(ast)
+	topEnvironment = map[string]StackVariable{}
+
+	instructions := compileAst(ast, topEnvironment)
 	writeValue := strings.Join(instructions, "\n")
 
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
