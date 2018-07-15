@@ -16,7 +16,7 @@ func compileLetPair(variableSymbol parser.Symbol, letExpression interface{}, env
 
 	letExpressionInstructions := compileAst(letExpression, environment)
 
-	// !! TODO !! Refactor this to saveStack function
+	// !! TODO !! Refactor to generic saveStack function
 	saveEaxOnStackInstruction := "movl %eax, " + strconv.Itoa(spIndex) + "(%rsp)"
 
 	environment[variableValue] = StackVariable{variableSymbol, spIndex}
