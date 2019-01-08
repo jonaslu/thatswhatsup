@@ -1,7 +1,10 @@
 package parser
 
 import (
+	"fmt"
 	"reflect"
+	"schemec/fails"
+	"strings"
 	"testing"
 )
 
@@ -16,34 +19,34 @@ func testTokenizeHelper(t *testing.T, program string, matches ...Token) {
 }
 
 func TestTokenizeBoolean(t *testing.T) {
-	testTokenizeHelper(t, "true", Token{"true", SourceMarker{0, 4}})
-	testTokenizeHelper(t, "false", Token{"false", SourceMarker{0, 5}})
+	testTokenizeHelper(t, "true", Token{"true", fails.SourceMarker{0, 4}})
+	testTokenizeHelper(t, "false", Token{"false", fails.SourceMarker{0, 5}})
 	testTokenizeHelper(t, "true false",
-		Token{"true", SourceMarker{0, 4}},
-		Token{"false", SourceMarker{5, 10}})
+		Token{"true", fails.SourceMarker{0, 4}},
+		Token{"false", fails.SourceMarker{5, 10}})
 }
 
 func TestTokenizeList(t *testing.T) {
-	testTokenizeHelper(t, "(", Token{"(", SourceMarker{0, 1}})
-	testTokenizeHelper(t, ")", Token{")", SourceMarker{0, 1}})
+	testTokenizeHelper(t, "(", Token{"(", fails.SourceMarker{0, 1}})
+	testTokenizeHelper(t, ")", Token{")", fails.SourceMarker{0, 1}})
 	testTokenizeHelper(t, "(   )",
-		Token{"(", SourceMarker{0, 1}},
-		Token{")", SourceMarker{4, 5}})
+		Token{"(", fails.SourceMarker{0, 1}},
+		Token{")", fails.SourceMarker{4, 5}})
 }
 
 // TODO Test on end of list not found
 
 func TestTokenizeChar(t *testing.T) {
-	testTokenizeHelper(t, "\\#m", Token{"\\#m", SourceMarker{0, 3}})
-	testTokenizeHelper(t, "\\#A", Token{"\\#A", SourceMarker{0, 3}})
-	testTokenizeHelper(t, "\\#0", Token{"\\#0", SourceMarker{0, 3}})
+	testTokenizeHelper(t, "\\#m", Token{"\\#m", fails.SourceMarker{0, 3}})
+	testTokenizeHelper(t, "\\#A", Token{"\\#A", fails.SourceMarker{0, 3}})
+	testTokenizeHelper(t, "\\#0", Token{"\\#0", fails.SourceMarker{0, 3}})
 }
 
 func TestTokenizeInteger(t *testing.T) {
-	testTokenizeHelper(t, "1234", Token{"1234", SourceMarker{0, 4}})
-	testTokenizeHelper(t, "1", Token{"1", SourceMarker{0, 1}})
-	testTokenizeHelper(t, "0", Token{"0", SourceMarker{0, 1}})
-	testTokenizeHelper(t, "-1", Token{"-1", SourceMarker{0, 2}})
+	testTokenizeHelper(t, "1234", Token{"1234", fails.SourceMarker{0, 4}})
+	testTokenizeHelper(t, "1", Token{"1", fails.SourceMarker{0, 1}})
+	testTokenizeHelper(t, "0", Token{"0", fails.SourceMarker{0, 1}})
+	testTokenizeHelper(t, "-1", Token{"-1", fails.SourceMarker{0, 2}})
 }
 
 func TestTokenizeComment(t *testing.T) {
@@ -54,36 +57,28 @@ func TestTokenizeComment(t *testing.T) {
 	}
 
 	testTokenizeHelper(t, "+ 1 2 ;; whatever\n+ 3 4",
-		Token{"+", SourceMarker{0, 1}},
-		Token{"1", SourceMarker{2, 3}})
+		Token{"+", fails.SourceMarker{0, 1}},
+		Token{"1", fails.SourceMarker{2, 3}})
 }
 
 func TestTokenizeAssorted(t *testing.T) {
 	testTokenizeHelper(t, "false true 0 \\#m",
-		Token{"false", SourceMarker{0, 5}},
-		Token{"true", SourceMarker{6, 10}},
-		Token{"0", SourceMarker{11, 12}},
-		Token{"\\#m", SourceMarker{13, 16}})
+		Token{"false", fails.SourceMarker{0, 5}},
+		Token{"true", fails.SourceMarker{6, 10}},
+		Token{"0", fails.SourceMarker{11, 12}},
+		Token{"\\#m", fails.SourceMarker{13, 16}})
 
 	testTokenizeHelper(t, "(if true ;;  Whatever\n",
-		Token{"(", SourceMarker{0, 1}},
-		Token{"if", SourceMarker{1, 3}},
-		Token{"true", SourceMarker{4, 8}})
+		Token{"(", fails.SourceMarker{0, 1}},
+		Token{"if", fails.SourceMarker{1, 3}},
+		Token{"true", fails.SourceMarker{4, 8}})
 }
 
 func testParseHelper(t *testing.T, tokens []Token, match interface{}) {
-	remainingTokens, result, error := parse(tokens)
+	remainingTokens, result := parse(tokens)
 
 	if len(remainingTokens) > 0 {
 		t.Error("Tokens remaining", remainingTokens)
-	}
-
-	if error != nil {
-		if error.Error() != match {
-			t.Error(error)
-		}
-
-		return
 	}
 
 	if result == nil {
@@ -111,7 +106,7 @@ func makeTokenizeReturnValue(values ...string) []Token {
 	returnValue := []Token{}
 
 	for _, value := range values {
-		returnValue = append(returnValue, Token{value, SourceMarker{0, 0}})
+		returnValue = append(returnValue, Token{value, fails.SourceMarker{0, 0}})
 	}
 
 	return returnValue
@@ -149,11 +144,11 @@ func makeListParseReturnValue(listMembers ...interface{}) List {
 
 	for _, value := range listMembers {
 		if intVal, ok := value.(int); ok {
-			returnValue = append(returnValue, Integer{intVal, SourceMarker{0, 0}})
+			returnValue = append(returnValue, Integer{intVal, fails.SourceMarker{0, 0}})
 		}
 
 		if strVal, ok := value.(string); ok {
-			returnValue = append(returnValue, Symbol{strVal, SourceMarker{0, 0}})
+			returnValue = append(returnValue, Symbol{strVal, fails.SourceMarker{0, 0}})
 		}
 
 		if reflect.TypeOf(value).String() == "parser.List" {
@@ -161,13 +156,13 @@ func makeListParseReturnValue(listMembers ...interface{}) List {
 		}
 	}
 
-	return List{returnValue, SourceMarker{0, 0}}
+	return List{returnValue, fails.SourceMarker{0, 0}}
 }
 
 func TestGetAstForLists(t *testing.T) {
 	emptyListTokens := makeTokenizeReturnValue("(", ")")
 
-	emptyList := List{[]interface{}{}, SourceMarker{0, 0}}
+	emptyList := List{[]interface{}{}, fails.SourceMarker{0, 0}}
 	testParseHelper(t, emptyListTokens, emptyList)
 
 	oneTwoThreeList := makeTokenizeReturnValue("(", "1", "2", "3", ")")
@@ -185,16 +180,29 @@ func TestGetAstForLists(t *testing.T) {
 }
 
 func TestGetAstForSymbols(t *testing.T) {
-	testParseHelper(t, makeTokenizeReturnValue("a"), Symbol{"a", SourceMarker{0, 0}})
-	testParseHelper(t, makeTokenizeReturnValue("Aaa"), Symbol{"Aaa", SourceMarker{0, 0}})
+	testParseHelper(t, makeTokenizeReturnValue("a"), Symbol{"a", fails.SourceMarker{0, 0}})
+	testParseHelper(t, makeTokenizeReturnValue("Aaa"), Symbol{"Aaa", fails.SourceMarker{0, 0}})
 }
 
-func testGetAst(t *testing.T, program string, match string) {
-	_, error := GetAst(program)
-
-	if error != nil {
-		if error.Error() != match {
-			t.Error(error, match)
+func testGetAstFail(t *testing.T, program string, expectedError string) {
+	defer func() {
+		if r := recover().(error); r != nil {
+			fmt.Println(program, r.Error(), expectedError)
+			if !strings.Contains(r.Error(), expectedError) {
+				t.Error("Failing testcase invalid", r.Error(), expectedError)
+			}
+		} else {
+			t.Error("Program expected to fail", expectedError)
 		}
-	}
+	}()
+
+	GetAst(program)
+}
+
+func TestUnknownSymbol(t *testing.T) {
+	testGetAstFail(t, "1.0", "Unrecognized symbol")
+}
+
+func TestEndOfListNotFound(t *testing.T) {
+	testGetAstFail(t, "(   add1 1", "Cannot find end of list")
 }

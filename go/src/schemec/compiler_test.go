@@ -2,91 +2,117 @@ package main
 
 import (
 	"os/exec"
+	"strings"
 	"testing"
 )
 
-func captureBinaryOutput(binaryFilePath string) string {
+func runTest(t *testing.T, program string) (string, error) {
+	binaryFilePath := Compile(program)
 
 	compiledBinaryOutput := exec.Command(binaryFilePath)
-
 	result, err := compiledBinaryOutput.Output()
 
-	if err != nil {
-		logAndQuit(err)
-	}
-
-	return string(result)
+	return string(result), err
 }
 
-func runTest(t *testing.T, program string, expected string) {
-	binaryFilePath := Compile(program)
-	result := captureBinaryOutput(binaryFilePath)
+func runSuccess(t *testing.T, program string, expected string) {
+	result, err := runTest(t, program)
+
+	if err != nil {
+		t.Error("Program failed", err)
+	}
 
 	if result != expected {
-		t.Error(result, expected)
+		t.Error("Test failed", result, expected)
 	}
+}
+
+func runFail(t *testing.T, program string, expectedError string) {
+	defer func() {
+		if r := recover().(error); r != nil {
+			if !strings.Contains(r.Error(), expectedError) {
+				t.Error("Failing testcase invalid", r.Error(), expectedError)
+			}
+		} else {
+			t.Error("Program expected to fail", expectedError)
+		}
+	}()
+
+	runTest(t, program)
 }
 
 func TestCompileIntegers(t *testing.T) {
-	runTest(t, "42", "42")
-	runTest(t, "666", "666")
-	runTest(t, "0", "0")
+	runSuccess(t, "42", "42")
+	runSuccess(t, "666", "666")
+	runSuccess(t, "0", "0")
 }
 
 func TestCompileBooleans(t *testing.T) {
-	runTest(t, "true", "true")
-	runTest(t, "false", "false")
+	runSuccess(t, "true", "true")
+	runSuccess(t, "false", "false")
 }
 
 func TestCompileEmptyList(t *testing.T) {
-	runTest(t, "()", "()")
+	runSuccess(t, "()", "()")
 }
 
 func TestCompileChar(t *testing.T) {
-	runTest(t, "#\\a", "#\\a")
-	runTest(t, "#\\1", "#\\1")
-	runTest(t, "#\\€", "#\\€")
+	runSuccess(t, "#\\a", "#\\a")
+	runSuccess(t, "#\\1", "#\\1")
+	runSuccess(t, "#\\€", "#\\€")
 }
 
 func TestCompileAddOperator(t *testing.T) {
-	runTest(t, "(add1 0)", "1")
-	runTest(t, "(add1 1)", "2")
-	runTest(t, "(add1 665)", "666")
+	runSuccess(t, "(add1 0)", "1")
+	runSuccess(t, "(add1 1)", "2")
+	runSuccess(t, "(add1 665)", "666")
 }
 
 func TestCompileCharToIntegerOperator(t *testing.T) {
-	runTest(t, "(char->integer 65)", "#\\A")
-	runTest(t, "(char->integer 97)", "#\\a")
+	runSuccess(t, "(char->integer 65)", "#\\A")
+	runSuccess(t, "(char->integer 97)", "#\\a")
 }
 
 func TestCompileIntegerToCharOperator(t *testing.T) {
-	runTest(t, "(integer->char #\\A)", "65")
-	runTest(t, "(integer->char #\\a)", "97")
+	runSuccess(t, "(integer->char #\\A)", "65")
+	runSuccess(t, "(integer->char #\\a)", "97")
 }
 
 func TestCompileCheckIfNull(t *testing.T) {
-	runTest(t, "(null? ())", "true")
-	runTest(t, "(null? 1)", "false")
+	runSuccess(t, "(null? ())", "true")
+	runSuccess(t, "(null? 1)", "false")
 }
 
 func TestCompileCheckIfZero(t *testing.T) {
-	runTest(t, "(zero? 0)", "true")
-	runTest(t, "(zero? 1)", "false")
+	runSuccess(t, "(zero? 0)", "true")
+	runSuccess(t, "(zero? 1)", "false")
 }
 
 func TestCompileNot(t *testing.T) {
-	runTest(t, "(not false)", "true")
-	runTest(t, "(not true)", "false")
+	runSuccess(t, "(not false)", "true")
+	runSuccess(t, "(not true)", "false")
 }
 
 func TestCompileAddNumbers(t *testing.T) {
-	runTest(t, "(+ 1 1)", "2")
+	runSuccess(t, "(+ 1 1)", "2")
 }
 
 func TestCompileAddAdd1Numbers(t *testing.T) {
-	runTest(t, "(+ 1 (add1 1))", "3")
+	runSuccess(t, "(+ 1 (add1 1))", "3")
 }
 
 func TestCompileAddRecursiveNumbers(t *testing.T) {
-	runTest(t, "(+ 1 (+ 1 1))", "3")
+	runSuccess(t, "(+ 1 (+ 1 1))", "3")
+}
+
+func TestExpectedSymbolAtFirstInListPosition(t *testing.T) {
+	runFail(t, "(1)", "Expected a function first in list")
+}
+
+func TestUnknownFunctionFirstInListPosition(t *testing.T) {
+	runFail(t, "(yggdrasil)", "Unknown function")
+}
+
+func TestUnknownVariable(t *testing.T) {
+	runFail(t, "yggdrasil", "Unknown variable")
 }

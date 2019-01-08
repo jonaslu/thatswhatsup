@@ -1,20 +1,15 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"schemec/fails"
 	"schemec/parser"
 	"strconv"
 	"strings"
 )
-
-func logAndQuit(err error) {
-	fmt.Printf("%+v", err)
-	os.Exit(1)
-}
 
 // 0011111
 const booleanTag = 31
@@ -30,6 +25,14 @@ var spIndex = -4
 
 const stackWordSize = -4
 
+var inputProgram string
+var topEnvironment map[string]StackVariable
+
+/* StackVariable
+ * is used in the environment to store
+ * a value in the stack (for use later in the
+ * function call).
+ */
 type StackVariable struct {
 	symbol  parser.Symbol
 	spIndex int
@@ -39,34 +42,42 @@ func getIntegerImmediateRepresentation(integerValue int) string {
 	return strconv.Itoa(integerValue << 2)
 }
 
-func getImmediateValue(ast interface{}) (string, error) {
+/* Returns the immediate representation (value combined with the
+ * type tag) as a string. Often used to store the value
+ * in eax to perform some calculation.
+ */
+func getImmediateValue(ast interface{}) string {
 	switch n := ast.(type) {
 
 	case parser.Integer:
 		integerValue := n.Value
-		return getIntegerImmediateRepresentation(integerValue), nil
+		return getIntegerImmediateRepresentation(integerValue)
 
 	case parser.Boolean:
 		if n.Value {
-			return strconv.Itoa(1<<booleanShiftBits + booleanTag), nil
+			return strconv.Itoa(1<<booleanShiftBits + booleanTag)
 		}
 
-		return strconv.Itoa(booleanTag), nil
+		return strconv.Itoa(booleanTag)
 
 	case parser.Char:
-		return strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag), nil
+		return strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag)
 
 	case parser.List:
 		if len(n.Value) == 0 {
-			return strconv.Itoa(emptyListTag), nil
+			return strconv.Itoa(emptyListTag)
 		}
 
-		return "", errors.New("Not an immediate value")
-
-	default:
-		// !! TODO !! Fix pretty error-printing
-		return "", errors.New("Not an immediate value")
+		// !! TODO !! Is this needed? How do we get here?
+		panic(fails.CompileFail(inputProgram, "Not an immediate value", n.SourceMarker))
 	}
+
+	// !! TODO !! If we get here it's an error in the compiler
+	// since it's an added parser.Type missed in the case
+	fmt.Printf("Compiler error, unknown type %v, %T", ast, ast)
+	os.Exit(1)
+
+	return ""
 }
 
 func storeImmediateRepresentationInEax(immediateRepresentation string) string {
@@ -84,16 +95,20 @@ func compareIfEaxContainsValue(compareValue string) []string {
 	return []string{compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
 }
 
-var topEnvironment map[string]StackVariable
-
-func parseList(list parser.List, environment map[string]StackVariable) ([]string, error) {
+/* If the list is empty, simply returns the immediate representation
+ * for a list. If not empty checks the function call (in the first
+ * position of the list and switches on known built in forms.
+ */
+func parseList(list parser.List, environment map[string]StackVariable) []string {
 	listValues := list.Value
 
 	if len(listValues) == 0 {
-		return []string{storeImmediateRepresentationInEax(strconv.Itoa(emptyListTag))}, nil
+		return []string{storeImmediateRepresentationInEax(strconv.Itoa(emptyListTag))}
 	}
 
-	if n, ok := listValues[0].(parser.Symbol); ok {
+	firstInList := listValues[0]
+
+	if n, ok := firstInList.(parser.Symbol); ok {
 		switch n.Value {
 		case "add1":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
@@ -102,7 +117,7 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
 
 			instructions := append(firstArgumentInstructions, addOneToValueInEax)
-			return instructions, nil
+			return instructions
 
 		case "char->integer":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
@@ -111,21 +126,21 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
 
 			charToIntegerInstructions := append(firstArgumentInstructions, shiftUpBy6Bits, setCharTag)
-			return charToIntegerInstructions, nil
+			return charToIntegerInstructions
 
 		case "integer->char":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			shiftByDown6Bits := "sarl $6, %eax"
 
-			charToIntegerInstructions := append(firstArgumentInstructions, shiftByDown6Bits)
-			return charToIntegerInstructions, nil
+			integerToCharInstructions := append(firstArgumentInstructions, shiftByDown6Bits)
+			return integerToCharInstructions
 
 		case "null?":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			checkIfNullInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
-			return checkIfNullInstructions, nil
+			return checkIfNullInstructions
 
 		case "zero?":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
@@ -133,7 +148,7 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 			zeroImmedateValue := getIntegerImmediateRepresentation(0)
 
 			checkIfZeroInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(zeroImmedateValue)...)
-			return checkIfZeroInstructions, nil
+			return checkIfZeroInstructions
 
 		case "not":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
@@ -145,7 +160,7 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 			setBooleanTag := "orl $31, %eax"
 
 			notInstructions := append(firstArgumentInstructions, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag)
-			return notInstructions, nil
+			return notInstructions
 
 		case "+":
 			// spIndex = spIndex - stackWordSize
@@ -162,7 +177,7 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 			instructions = append(instructions, firstArgumentInstructions...)
 			instructions = append(instructions, addStackInstructionsToEax)
 
-			return instructions, nil
+			return instructions
 
 		// case "-":
 		// case "*":
@@ -170,22 +185,27 @@ func parseList(list parser.List, environment map[string]StackVariable) ([]string
 		// case "char=?":
 		// (let ((a 1) (b 2)) body-expr body-expr)
 		case "let":
-			return compileLet(list, environment), nil
+			return compileLet(list, environment)
+
+		default:
+			panic(fails.CompileFail(inputProgram, "Unknown function", n.SourceMarker))
 		}
 	}
 
-	// TODO Fix pretty error-printing
-	return nil, errors.New("Expected symbol at position")
+	panic(fails.CompileFail(inputProgram, "Expected a function first in list", firstInList.(parser.HasSourceMarker).GetSourceMarker()))
 }
 
+/* The main meat in this file - takes the parsed ast and
+ * and any environment and switches on the ast.
+ * If it's a list we parse it as a list (with function calls).
+ * If not we try to find a symbol in the environment matching the ast
+ * and if not it's an immediate value (Char, Boolean, Integer)
+ * and we return the value.
+ */
 func compileAst(ast interface{}, environment map[string]StackVariable) []string {
 	switch n := ast.(type) {
 	case parser.List:
-		instructions, err := parseList(n, environment)
-
-		if err != nil {
-			logAndQuit(err)
-		}
+		instructions := parseList(n, environment)
 
 		return instructions
 
@@ -193,14 +213,14 @@ func compileAst(ast interface{}, environment map[string]StackVariable) []string 
 		stackVariable, variableFound := environment[n.Value]
 
 		if !variableFound {
-			logAndQuit(errors.New("Unknown variable"))
+			panic(fails.CompileFail(inputProgram, "Unknown variable", n.SourceMarker))
 		}
 
 		fetchStackPosToEax := "movl " + strconv.Itoa(stackVariable.spIndex) + "(%rsp), %eax"
 		return []string{fetchStackPosToEax}
 
 	default:
-		immediateRepresentation, _ := getImmediateValue(ast)
+		immediateRepresentation := getImmediateValue(ast)
 		writeValue := storeImmediateRepresentationInEax(immediateRepresentation)
 
 		return []string{writeValue}
@@ -208,11 +228,7 @@ func compileAst(ast interface{}, environment map[string]StackVariable) []string 
 }
 
 func compile(program string) string {
-	ast, err := parser.GetAst(program)
-
-	if err != nil {
-		logAndQuit(err)
-	}
+	ast := parser.GetAst(program)
 
 	topEnvironment = map[string]StackVariable{}
 
@@ -222,10 +238,8 @@ func compile(program string) string {
 	content, err := ioutil.ReadFile("resources/compile-unit.s")
 
 	if err != nil {
-		logAndQuit(err)
+		panic(err)
 	}
-
-	fmt.Println(writeValue)
 
 	runcode := strings.Replace(string(content), "[insert]", writeValue, 1)
 
@@ -237,7 +251,7 @@ func writeAssemblyFile(runcode string) string {
 	file, err := os.Create(assemblyFilePath)
 
 	if err != nil {
-		logAndQuit(err)
+		panic(err)
 	}
 
 	file.WriteString(runcode)
@@ -252,7 +266,7 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 	_, err := gccBinaryCmd.Output()
 
 	if err != nil {
-		logAndQuit(err)
+		panic(err)
 	}
 
 	return binaryName
@@ -261,6 +275,8 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 // Compile takes a program as a string and returns the filepath
 // of a runnable binary with the program compiled
 func Compile(program string) string {
+	inputProgram = program
+
 	assembly := compile(program)
 	assemblyFilePath := writeAssemblyFile(assembly)
 	binaryFilePath := makeRunCodeBinary(assemblyFilePath)
