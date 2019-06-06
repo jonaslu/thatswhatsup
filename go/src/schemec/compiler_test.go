@@ -116,3 +116,24 @@ func TestUnknownFunctionFirstInListPosition(t *testing.T) {
 func TestUnknownVariable(t *testing.T) {
 	runFail(t, "yggdrasil", "Unknown variable")
 }
+
+func TestIfTrueBranch(t *testing.T) {
+	runSuccess(t, "(if true 1 0)", "1")
+}
+
+func TestIfFalseBranch(t *testing.T) {
+	runSuccess(t, "(if false 1 0)", "0")
+}
+
+func TestComplexIf(t *testing.T) {
+	runSuccess(t, "(if (zero? (+ 1 1)) 1 0)", "0")
+}
+
+func TestMoreComplexIf(t *testing.T) {
+	runSuccess(t, `(let
+		(
+		 (a (+ 1 1))
+		 (b (+ 2 2))
+		)
+		(if (zero? a) 1 0))`, "0")
+}

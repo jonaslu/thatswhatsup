@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"schemec/compilerutils"
 	"schemec/fails"
 	"schemec/parser"
 	"strconv"
@@ -38,6 +39,14 @@ type StackVariable struct {
 	spIndex int
 }
 
+func getBooleanImmediateRepresentation(booleanValue bool) string {
+	if booleanValue {
+		return strconv.Itoa(1<<booleanShiftBits + booleanTag)
+	}
+
+	return strconv.Itoa(booleanTag)
+}
+
 func getIntegerImmediateRepresentation(integerValue int) string {
 	return strconv.Itoa(integerValue << 2)
 }
@@ -54,11 +63,7 @@ func getImmediateValue(ast interface{}) string {
 		return getIntegerImmediateRepresentation(integerValue)
 
 	case parser.Boolean:
-		if n.Value {
-			return strconv.Itoa(1<<booleanShiftBits + booleanTag)
-		}
-
-		return strconv.Itoa(booleanTag)
+		return getBooleanImmediateRepresentation(n.Value)
 
 	case parser.Char:
 		return strconv.Itoa(int(n.Value)<<charactersShiftBits + charactersTag)
@@ -187,6 +192,32 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 		case "let":
 			return compileLet(list, environment)
 
+			// (if test-value truebranch falsebranch)
+		case "if":
+			endLabel := compilerutils.GetUniqueLabel()
+			falseLabel := compilerutils.GetUniqueLabel()
+
+			instructionsForTestValue := compileAst(listValues[1], environment)
+
+			compareWithFalseValue := "cmpl $" + getBooleanImmediateRepresentation(false) + ", %eax"
+			jumpToFalseBranchIfEqual := "je " + falseLabel
+
+			trueBranchInstructions := compileAst(listValues[2], environment)
+			jmpToEndLabelInstruction := "jmp " + endLabel
+
+			emitFalseLabelInstruction := falseLabel + ":"
+			falseBranchInstructions := compileAst(listValues[3], environment)
+
+			endOfIfLabelInstruction := endLabel + ":"
+
+			instructions := append(instructionsForTestValue, compareWithFalseValue, jumpToFalseBranchIfEqual)
+			instructions = append(instructions, trueBranchInstructions...)
+			instructions = append(instructions, jmpToEndLabelInstruction, emitFalseLabelInstruction)
+			instructions = append(instructions, falseBranchInstructions...)
+			instructions = append(instructions, endOfIfLabelInstruction)
+
+			return instructions
+
 		default:
 			panic(fails.CompileFail(inputProgram, "Unknown function", n.SourceMarker))
 		}
@@ -263,9 +294,14 @@ func makeRunCodeBinary(assemblyOutputFile string) string {
 	binaryName := "output/run-assembly"
 	gccBinaryCmd := exec.Command("gcc", "resources/run-assembly.c", assemblyOutputFile, "-o", binaryName)
 
-	_, err := gccBinaryCmd.Output()
+	stdout, err := gccBinaryCmd.Output()
 
 	if err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			fmt.Printf("Exit code: %d error message: %s", exitError.ExitCode(), stdout)
+			fmt.Println("Compilation failed, binary can be found in: ", assemblyOutputFile)
+			panic(string(exitError.Stderr))
+		}
 		panic(err)
 	}
 
@@ -282,4 +318,7 @@ func Compile(program string) string {
 	binaryFilePath := makeRunCodeBinary(assemblyFilePath)
 
 	return binaryFilePath
+}
+
+func main() {
 }

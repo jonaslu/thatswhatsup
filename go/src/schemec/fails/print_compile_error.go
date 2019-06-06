@@ -82,7 +82,7 @@ func getErrorMessages(program string, sourceMarker SourceMarker) (string, string
 }
 
 // CompileFail returns a struct that implements the Error() interface
-// and is used in panic() when the compilation failsz
+// and is used in panic() when the compilation fails
 func CompileFail(program string, errorMessage string, sourceMarker SourceMarker) Fail {
 	return Fail{program, errorMessage, sourceMarker}
 }
