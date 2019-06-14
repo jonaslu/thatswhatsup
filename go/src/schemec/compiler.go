@@ -22,9 +22,9 @@ const charactersShiftBits = 8
 // 00101111
 const emptyListTag = 47
 
-var spIndex = -4
+var spIndex = -8
 
-const stackWordSize = -4
+const stackWordSize = -8
 
 var inputProgram string
 var topEnvironment map[string]StackVariable
@@ -53,7 +53,7 @@ func getIntegerImmediateRepresentation(integerValue int) string {
 
 /* Returns the immediate representation (value combined with the
  * type tag) as a string. Often used to store the value
- * in eax to perform some calculation.
+ * in rax to perform some calculation.
  */
 func getImmediateValue(ast interface{}) string {
 	switch n := ast.(type) {
@@ -85,19 +85,19 @@ func getImmediateValue(ast interface{}) string {
 	return ""
 }
 
-func storeImmediateRepresentationInEax(immediateRepresentation string) string {
-	return "movl $" + immediateRepresentation + ", %eax"
+func storeImmediateRepresentationInRax(immediateRepresentation string) string {
+	return "movq $" + immediateRepresentation + ", %rax"
 }
 
-func compareIfEaxContainsValue(compareValue string) []string {
-	compareWithEmptyList := "cmpl $" + compareValue + ", %eax"
-	zeroEax := "movl $0, %eax"
-	setLowBitOfEaxToOneIfEqual := "sete %al"
+func compareIfRaxContainsValue(compareValue string) []string {
+	compareWithEmptyList := "cmpq $" + compareValue + ", %rax"
+	zeroRax := "movq $0, %rax"
+	setLowBitOfRaxToOneIfEqual := "sete %al"
 
-	shiftUpby7Bits := "sall $7, %eax"
-	setBooleanTag := "orl $31, %eax"
+	shiftUpby7Bits := "salq $7, %rax"
+	setBooleanTag := "orq $31, %rax"
 
-	return []string{compareWithEmptyList, zeroEax, setLowBitOfEaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
+	return []string{compareWithEmptyList, zeroRax, setLowBitOfRaxToOneIfEqual, shiftUpby7Bits, setBooleanTag}
 }
 
 /* If the list is empty, simply returns the immediate representation
@@ -108,7 +108,7 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 	listValues := list.Value
 
 	if len(listValues) == 0 {
-		return []string{storeImmediateRepresentationInEax(strconv.Itoa(emptyListTag))}
+		return []string{storeImmediateRepresentationInRax(strconv.Itoa(emptyListTag))}
 	}
 
 	firstInList := listValues[0]
@@ -119,16 +119,16 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
 			addOneImmediateValue := getIntegerImmediateRepresentation(1)
-			addOneToValueInEax := "addl $" + addOneImmediateValue + ", %eax"
+			addOneToValueInRax := "addq $" + addOneImmediateValue + ", %rax"
 
-			instructions := append(firstArgumentInstructions, addOneToValueInEax)
+			instructions := append(firstArgumentInstructions, addOneToValueInRax)
 			return instructions
 
 		case "char->integer":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
-			shiftUpBy6Bits := "sall $6, %eax"
-			setCharTag := "addl $" + strconv.Itoa(charactersTag) + ", %eax"
+			shiftUpBy6Bits := "salq $6, %rax"
+			setCharTag := "addq $" + strconv.Itoa(charactersTag) + ", %rax"
 
 			charToIntegerInstructions := append(firstArgumentInstructions, shiftUpBy6Bits, setCharTag)
 			return charToIntegerInstructions
@@ -136,7 +136,7 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 		case "integer->char":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
-			shiftByDown6Bits := "sarl $6, %eax"
+			shiftByDown6Bits := "sarq $6, %rax"
 
 			integerToCharInstructions := append(firstArgumentInstructions, shiftByDown6Bits)
 			return integerToCharInstructions
@@ -144,7 +144,7 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 		case "null?":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
-			checkIfNullInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(strconv.Itoa(emptyListTag))...)
+			checkIfNullInstructions := append(firstArgumentInstructions, compareIfRaxContainsValue(strconv.Itoa(emptyListTag))...)
 			return checkIfNullInstructions
 
 		case "zero?":
@@ -152,17 +152,17 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 
 			zeroImmedateValue := getIntegerImmediateRepresentation(0)
 
-			checkIfZeroInstructions := append(firstArgumentInstructions, compareIfEaxContainsValue(zeroImmedateValue)...)
+			checkIfZeroInstructions := append(firstArgumentInstructions, compareIfRaxContainsValue(zeroImmedateValue)...)
 			return checkIfZeroInstructions
 
 		case "not":
 			firstArgumentInstructions := compileAst(listValues[1], environment)
 
-			shiftByDown7Bytes := "sarl $7, %eax"
-			xorWithOne := "xorl $1, %eax"
+			shiftByDown7Bytes := "sarq $7, %rax"
+			xorWithOne := "xorq $1, %rax"
 
-			shiftUpby7Bits := "sall $7, %eax"
-			setBooleanTag := "orl $31, %eax"
+			shiftUpby7Bits := "salq $7, %rax"
+			setBooleanTag := "orq $31, %rax"
 
 			notInstructions := append(firstArgumentInstructions, shiftByDown7Bytes, xorWithOne, shiftUpby7Bits, setBooleanTag)
 			return notInstructions
@@ -170,17 +170,17 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 		case "+":
 			// spIndex = spIndex - stackWordSize
 			secondArgumentInstructions := compileAst(listValues[2], environment)
-			saveEaxOnStackInstruction := "movl %eax, " + strconv.Itoa(spIndex) + "(%rsp)"
+			saveRaxOnStackInstruction := "movq %rax, " + strconv.Itoa(spIndex) + "(%rsp)"
 
 			firstArgumentInstructions := compileAst(listValues[1], environment)
-			addStackInstructionsToEax := "addl " + strconv.Itoa(spIndex) + "(%rsp), %eax"
+			addStackInstructionsToRax := "addq " + strconv.Itoa(spIndex) + "(%rsp), %rax"
 			spIndex = spIndex + stackWordSize
 
 			instructions := []string{}
 			instructions = append(instructions, secondArgumentInstructions...)
-			instructions = append(instructions, saveEaxOnStackInstruction)
+			instructions = append(instructions, saveRaxOnStackInstruction)
 			instructions = append(instructions, firstArgumentInstructions...)
-			instructions = append(instructions, addStackInstructionsToEax)
+			instructions = append(instructions, addStackInstructionsToRax)
 
 			return instructions
 
@@ -199,7 +199,7 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 
 			instructionsForTestValue := compileAst(listValues[1], environment)
 
-			compareWithFalseValue := "cmpl $" + getBooleanImmediateRepresentation(false) + ", %eax"
+			compareWithFalseValue := "cmpq $" + getBooleanImmediateRepresentation(false) + ", %rax"
 			jumpToFalseBranchIfEqual := "je " + falseLabel
 
 			trueBranchInstructions := compileAst(listValues[2], environment)
@@ -247,12 +247,12 @@ func compileAst(ast interface{}, environment map[string]StackVariable) []string 
 			panic(fails.CompileFail(inputProgram, "Unknown variable", n.SourceMarker))
 		}
 
-		fetchStackPosToEax := "movl " + strconv.Itoa(stackVariable.spIndex) + "(%rsp), %eax"
-		return []string{fetchStackPosToEax}
+		fetchStackPosToRax := "movq " + strconv.Itoa(stackVariable.spIndex) + "(%rsp), %rax"
+		return []string{fetchStackPosToRax}
 
 	default:
 		immediateRepresentation := getImmediateValue(ast)
-		writeValue := storeImmediateRepresentationInEax(immediateRepresentation)
+		writeValue := storeImmediateRepresentationInRax(immediateRepresentation)
 
 		return []string{writeValue}
 	}

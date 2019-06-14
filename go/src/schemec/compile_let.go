@@ -8,7 +8,7 @@ import (
 
 /* Compiles one pair in a let-list (let ( THIS GUY -> (a 1) <- THIS GUY
  * by generating code for whatever the symbol (a in this case)
- * and getting the computed value (by convention stored in %eax)
+ * and getting the computed value (by convention stored in %rax)
  * storing it off onto the stack and saving the stack position.
  * Then binding the stack position to the variable name.
  */
@@ -24,12 +24,12 @@ func compileLetPair(variableSymbol parser.Symbol, letExpression interface{}, env
 	letExpressionInstructions := compileAst(letExpression, environment)
 
 	// !! TODO !! Refactor to generic saveStack function
-	saveEaxOnStackInstruction := "movl %eax, " + strconv.Itoa(spIndex) + "(%rsp)"
+	saveRaxOnStackInstruction := "movq %rax, " + strconv.Itoa(spIndex) + "(%rsp)"
 
 	environment[variableName] = StackVariable{variableSymbol, spIndex}
 	spIndex = spIndex + stackWordSize
 
-	return append(letExpressionInstructions, saveEaxOnStackInstruction)
+	return append(letExpressionInstructions, saveRaxOnStackInstruction)
 }
 
 /* Runs through each pair in the let assignments and
