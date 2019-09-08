@@ -2,13 +2,28 @@
 #include <net/if.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
+#include <linux/if_ether.h>
 #include <sys/ioctl.h>
+#include <arpa/inet.h>
 
-#include <stdio.h> // printf
-#include <stdlib.h> // exits
-#include <string.h> // memset
-#include <unistd.h> // read
+#include <stdio.h>    // printf
+#include <stdlib.h>   // exits
+#include <string.h>   // memset
+#include <unistd.h>   // read
 
+#include "headers.h"
+#include "arp.h"
+
+struct eth_hdr *get_ether_header(char *buf)
+{
+  struct eth_hdr *hdr = (struct eth_hdr *)buf;
+
+  // It's big endian in the linux/if_ether.h
+  // This turns the host (le) to network (be)
+  hdr->ethertype = htons(hdr->ethertype);
+
+  return hdr;
+}
 
 int tun_alloc()
 {
@@ -18,15 +33,17 @@ int tun_alloc()
   memset(&(ifr), 0, sizeof(ifr));
 
   int fd_open_code = fd = open("/dev/net/tun", O_RDWR);
-  if (fd_open_code < 0) {
+  if (fd_open_code < 0)
+  {
     printf("Error opening device, code %d", fd_open_code);
     exit(1);
   }
 
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
 
-  int ioctl_code = ioctl(fd, TUNSETIFF, (void *) &ifr);
-  if (ioctl_code < 0) {
+  int ioctl_code = ioctl(fd, TUNSETIFF, (void *)&ifr);
+  if (ioctl_code < 0)
+  {
     printf("Error setting ioctl flags, code %d", ioctl_code);
     exit(1);
   }
@@ -34,22 +51,31 @@ int tun_alloc()
   return fd;
 }
 
-void write_ether_frame(int fd) {
-
-}
-
-
-void read_ether_frame(int fd) {
-  char data[32];
-  int bytes_read = read(fd, &data, 32);
-  printf("%d bytes read, msg %s\n", bytes_read, data);
-}
-
-int main(void) {
+int main(void)
+{
+  int buf_len = 32;
+  char buf[32];
   int fd = tun_alloc();
 
-  while (1) {
-    read_ether_frame(fd);
+  while (1)
+  {
+    int bytes_read = read(fd, &buf, buf_len);
+    struct eth_hdr *hdr = get_ether_header(buf);
+
+    switch (hdr->ethertype)
+    {
+    case ETH_P_ARP:
+    {
+      handle_arp_header(hdr->payload);
+      break;
+    }
+    default:
+    {
+      break;
+    }
+    }
+
+    // dump_as_hex(buf, bytes_read);
   }
 
   return 0;
