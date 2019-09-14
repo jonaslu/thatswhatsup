@@ -13,6 +13,7 @@
 
 #include "headers.h"
 #include "arp.h"
+#include "utils.h"
 
 struct eth_hdr *get_ether_header(char *buf)
 {
@@ -60,6 +61,7 @@ int main(void)
   while (1)
   {
     int bytes_read = read(fd, &buf, buf_len);
+    dump_eth_hdr(buf, bytes_read);
     struct eth_hdr *hdr = get_ether_header(buf);
 
     switch (hdr->ethertype)
