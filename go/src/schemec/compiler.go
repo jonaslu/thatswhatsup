@@ -215,6 +215,29 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 			instructions = append(instructions, jmpToEndLabelInstruction, emitFalseLabelInstruction)
 			instructions = append(instructions, falseBranchInstructions...)
 			instructions = append(instructions, endOfIfLabelInstruction)
+			return instructions
+
+		case "cons":
+			instructionsForCarValue := compileAst(listValues[1], environment)
+			saveRaxOnStackInstruction := "movq %rax, " + strconv.Itoa(spIndex) + "(%rsp)"
+			spIndex = spIndex + stackWordSize
+
+			instructionsForCdrValue := compileAst(listValues[2], environment)
+			spIndex := spIndex - stackWordSize
+
+			storeCarValue := []string{"movq " + strconv.Itoa(spIndex) + "(%rsp), %rbx", "movq %rbx, 0(%rsi)"}
+			storeCdrValue := "movq %rax, 8(%rsi)"
+
+			makeRaxAPairTag := []string{"movq %rsi, %rax", "orq $1, %rax"}
+			bumpEsi := "addq $16, %rsi"
+
+			instructions := instructionsForCarValue
+			instructions = append(instructions, saveRaxOnStackInstruction)
+			instructions = append(instructions, instructionsForCdrValue...)
+			instructions = append(instructions, storeCarValue...)
+			instructions = append(instructions, storeCdrValue)
+			instructions = append(instructions, makeRaxAPairTag...)
+			instructions = append(instructions, bumpEsi)
 
 			return instructions
 

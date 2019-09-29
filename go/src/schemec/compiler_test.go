@@ -137,3 +137,15 @@ func TestMoreComplexIf(t *testing.T) {
 		)
 		(if (zero? a) 1 0))`, "0")
 }
+
+func TestCons(t *testing.T) {
+	runSuccess(t, `(cons 10 20)`, "(10 20)")
+}
+
+func TestNestedCons(t *testing.T) {
+	runSuccess(t, `(cons 10 (cons 10 20))`, "(10 (10 20))")
+}
+
+func TestNestedCons2(t *testing.T) {
+	runSuccess(t, `(cons (cons 10 20) 30)`, "((10 20) 30)")
+}
