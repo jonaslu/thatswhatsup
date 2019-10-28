@@ -10,7 +10,7 @@ void dump_as_hex(unsigned char *buf, int bytes_read)
   }
 }
 
-void dump_arp_hdr(unsigned char *hdr, int arp_size)
+void dump_arp_hdr(unsigned char *hdr)
 {
   int position = 0;
 
@@ -36,7 +36,7 @@ void dump_arp_hdr(unsigned char *hdr, int arp_size)
   printf("\n");
 }
 
-void dump_eth_hdr(unsigned char *hdr, int bytes_read)
+void dump_eth_hdr(unsigned char *hdr)
 {
   int position = 0;
   printf("Ether frame ------\n");

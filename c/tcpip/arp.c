@@ -5,8 +5,6 @@
 #include "headers.h"
 #include "utils.h"
 
-#define ARP_HEADER_SIZE 28
-
 void handle_arp_header(unsigned char *payload) {
   struct arp_hdr *hdr = (struct arp_hdr *)payload;
 
@@ -14,5 +12,5 @@ void handle_arp_header(unsigned char *payload) {
 
   }
 
-  dump_arp_hdr(payload, ARP_HEADER_SIZE);
+  dump_arp_hdr(payload);
 }

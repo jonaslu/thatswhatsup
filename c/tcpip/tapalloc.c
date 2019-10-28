@@ -61,7 +61,7 @@ int main(void)
   while (1)
   {
     int bytes_read = read(fd, &buf, buf_len);
-    dump_eth_hdr(buf, bytes_read);
+    dump_eth_hdr(buf);
     struct eth_hdr *hdr = get_ether_header(buf);
 
     switch (hdr->ethertype)
