@@ -14,7 +14,5 @@ void handle_arp_header(unsigned char *payload) {
 
   }
 
-  dump_as_hex(payload, ARP_HEADER_SIZE);
-
-  printf("Arp hw type: %X\n", hdr->hwtype);
+  dump_arp_hdr(payload, ARP_HEADER_SIZE);
 }

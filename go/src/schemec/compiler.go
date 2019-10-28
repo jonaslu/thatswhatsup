@@ -241,6 +241,13 @@ func parseList(list parser.List, environment map[string]StackVariable) []string 
 
 			return instructions
 
+		case "make-vector":
+			// !! TODO !! I was here
+			// To allocate a vector, we return a chunk
+			// of the heap where the first thing is the size
+			// of the vector and the second thing is the
+			// actual memory where we can store stuff
+
 		default:
 			panic(fails.CompileFail(inputProgram, "Unknown function", n.SourceMarker))
 		}

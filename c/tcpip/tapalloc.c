@@ -76,8 +76,6 @@ int main(void)
       break;
     }
     }
-
-    // dump_as_hex(buf, bytes_read);
   }
 
   return 0;
