@@ -6,10 +6,10 @@
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 
-#include <stdio.h>    // printf
-#include <stdlib.h>   // exits
-#include <string.h>   // memset
-#include <unistd.h>   // read
+#include <stdio.h>  // printf
+#include <stdlib.h> // exits
+#include <string.h> // memset
+#include <unistd.h> // read
 
 #include "headers.h"
 #include "arp.h"
