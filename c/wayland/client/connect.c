@@ -56,8 +56,20 @@ int main()
   wl_client.registry = wl_display_get_registry(wl_client.display);
   wl_registry_add_listener(wl_client.registry, &registry_listener, &wl_client);
 
+  wl_display_dispatch(wl_client.display);
+  wl_display_roundtrip(wl_client.display);
+
+  struct wl_surface *surface = wl_compositor_create_surface(wl_client.compositor);
+  struct xdg_surface *xdg_surface = xdg_wm_base_get_xdg_surface(wl_client.wm_base, surface);
+
+  struct xdg_toplevel *xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
+
+  wl_surface_commit(surface);
+
+  wl_display_dispatch(wl_client.display);
   wl_display_roundtrip(wl_client.display);
 
   wl_display_disconnect(wl_client.display);
+
   return 0;
 }

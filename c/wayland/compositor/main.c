@@ -31,13 +31,25 @@ struct mcw_server
   struct wlr_compositor *compositor;
 
   struct wl_listener new_output;
+  struct wl_listener new_surface;
+  struct wl_listener new_xdg_surface;
 
   struct wl_list outputs;
+
+  struct wlr_xdg_shell *xdg_shell;
 };
+
+static void new_xdg_surface_notify(struct wl_listener *listener, void *data) {
+  // struct mcw_server *server = wl_container_of(listener, server, new_surface);
+
+  printf("Surface hooked up\n");
+}
 
 static void frame_output_notify(struct wl_listener *listener, void *data)
 {
   struct mcw_output *output = wl_container_of(listener, output, frame);
+  // struct mcw_server *server = wl_container_of(output, output, server);
+
   struct wlr_output *wlr_output = data;
 
   struct wlr_renderer *renderer = wlr_backend_get_renderer(wlr_output->backend);
@@ -45,7 +57,8 @@ static void frame_output_notify(struct wl_listener *listener, void *data)
   wlr_output_attach_render(wlr_output, NULL);
 
   wlr_renderer_begin(renderer, wlr_output->width, wlr_output->height);
-  float color[4] = {1.0, 0.0, 0.0, 1.0};
+
+  float color[4] = {0.0, 0.0, 0.0, 1.0};
   wlr_renderer_clear(renderer, color);
   wlr_renderer_end(renderer);
 
@@ -118,9 +131,11 @@ int main()
   printf("Wayland running on socket: %s\n", socket);
   setenv("WAYLAND_DISPLAY", socket, true);
 
-  wl_display_init_shm(server.wl_display);
   server.compositor = wlr_compositor_create(server.wl_display, wlr_backend_get_renderer(server.backend));
-  wlr_xdg_shell_create(server.wl_display);
+  server.xdg_shell = wlr_xdg_shell_create(server.wl_display);
+
+  server.new_xdg_surface.notify = new_xdg_surface_notify;
+  wl_signal_add(&server.xdg_shell->events.new_surface, &server.new_xdg_surface);
 
   if (!wlr_backend_start(server.backend))
   {
@@ -129,6 +144,8 @@ int main()
   }
 
   wl_display_run(server.wl_display);
+
+  wl_display_destroy_clients(server.wl_display);
   wl_display_destroy(server.wl_display);
 
   return 0;
