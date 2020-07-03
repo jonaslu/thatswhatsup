@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -10,6 +11,7 @@ static struct wl_client
   struct wl_compositor *compositor;
   struct wl_registry *registry;
   struct xdg_wm_base *wm_base;
+  struct wl_shm *shm;
 } wl_client;
 
 static void global_registry_handler(void *data, struct wl_registry *wl_registry, uint32_t id, const char *interface, uint32_t version)
@@ -18,14 +20,19 @@ static void global_registry_handler(void *data, struct wl_registry *wl_registry,
 
   printf("Got an event for %s id %d\n", interface, id);
 
-  if (strcmp(interface, "wl_compositor") == 0)
+  if (strcmp(interface, wl_compositor_interface.name) == 0)
   {
     wl_client->compositor = wl_registry_bind(wl_registry, id, &wl_compositor_interface, version);
   }
 
-  if (strcmp(interface, "xdg_wm_base") == 0)
+  if (strcmp(interface, xdg_wm_base_interface.name) == 0)
   {
     wl_client->wm_base = wl_registry_bind(wl_registry, id, &xdg_wm_base_interface, version);
+  }
+
+  if (strcmp(interface, wl_shm_interface.name) == 0)
+  {
+    wl_client->shm = wl_registry_bind(wl_registry, id, &wl_shm_interface, version);
   }
 }
 
@@ -58,6 +65,8 @@ int main()
 
   wl_display_dispatch(wl_client.display);
   wl_display_roundtrip(wl_client.display);
+
+  assert(wl_client.display && wl_client.compositor && wl_client.shm && wl_client.wm_base);
 
   struct wl_surface *surface = wl_compositor_create_surface(wl_client.compositor);
   struct xdg_surface *xdg_surface = xdg_wm_base_get_xdg_surface(wl_client.wm_base, surface);
