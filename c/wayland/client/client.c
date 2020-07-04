@@ -8,15 +8,7 @@
 #include "xdg-shell-client-protocol.h"
 #include "wayland-client.h"
 
-static struct wl_client
-{
-  struct wl_display *display;
-  struct wl_compositor *compositor;
-  struct wl_registry *registry;
-  struct xdg_wm_base *wm_base;
-  struct wl_shm *shm;
-  struct wl_surface *surface;
-} wl_client;
+#include "client.h"
 
 const int width = 200, height = 200;
 int stride = 4;
@@ -71,45 +63,16 @@ static void xdg_surface_configure(void *data, struct xdg_surface *surface, uint3
   struct wl_buffer *buffer = render_buffer(client->shm);
   wl_surface_attach(client->surface, buffer, 0, 0);
   wl_surface_commit(client->surface);
+
+  // Set up frame callback
+  // struct wl_callback *wl_frame_callback = wl_surface_frame(client->surface);
+  // wl_callback_add_listener(wl_frame_callback, )
 }
 
 const static struct xdg_surface_listener surface_listener = {
     .configure = xdg_surface_configure,
 };
 
-static void global_registry_handler(void *data, struct wl_registry *wl_registry, uint32_t id, const char *interface, uint32_t version)
-{
-  struct wl_client *wl_client = data;
-
-  printf("Got an event for %s id %d\n", interface, id);
-
-  if (strcmp(interface, wl_compositor_interface.name) == 0)
-  {
-    wl_client->compositor = wl_registry_bind(wl_registry, id, &wl_compositor_interface, version);
-  }
-
-  if (strcmp(interface, xdg_wm_base_interface.name) == 0)
-  {
-    wl_client->wm_base = wl_registry_bind(wl_registry, id, &xdg_wm_base_interface, version);
-  }
-
-  if (strcmp(interface, wl_shm_interface.name) == 0)
-  {
-    wl_client->shm = wl_registry_bind(wl_registry, id, &wl_shm_interface, version);
-  }
-}
-
-static void global_remove(void *our_data,
-                          struct wl_registry *registry,
-                          uint32_t name)
-{
-  printf("Got remove: %d", name);
-}
-
-struct wl_registry_listener registry_listener = {
-    .global = global_registry_handler,
-    .global_remove = global_remove,
-};
 
 int main()
 {
@@ -124,8 +87,7 @@ int main()
 
   fprintf(stderr, "Connection established!\n");
 
-  wl_client.registry = wl_display_get_registry(wl_client.display);
-  wl_registry_add_listener(wl_client.registry, &registry_listener, &wl_client);
+  init_registry_listener(&wl_client);
 
   wl_display_dispatch(wl_client.display);
   wl_display_roundtrip(wl_client.display);
