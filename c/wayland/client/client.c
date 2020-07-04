@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/syscall.h>
 #include <sys/mman.h>
 
@@ -73,20 +74,22 @@ const static struct xdg_surface_listener surface_listener = {
     .configure = xdg_surface_configure,
 };
 
+static void init_display(struct wl_client *client) {
+  client->display = wl_display_connect(NULL);
+  if (!client->display)
+  {
+    fprintf(stderr, "Failed to connect to Wayland display.\n");
+    exit(1);
+  }
+
+  fprintf(stderr, "Connection established!\n");
+}
 
 int main()
 {
   struct wl_client wl_client;
 
-  wl_client.display = wl_display_connect(NULL);
-  if (!wl_client.display)
-  {
-    fprintf(stderr, "Failed to connect to Wayland display.\n");
-    return 1;
-  }
-
-  fprintf(stderr, "Connection established!\n");
-
+  init_display(&wl_client);
   init_registry_listener(&wl_client);
 
   wl_display_dispatch(wl_client.display);
