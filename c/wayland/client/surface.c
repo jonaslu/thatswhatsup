@@ -3,18 +3,35 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 #include <sys/mman.h>
+#include <cairo/cairo.h>
 
 #include "xdg-shell-client-protocol.h"
 
 #include "client.h"
 
-int add = 0;
-
-const int width = 200, height = 200;
+const int width = 600, height = 600;
 int stride = 4;
-int size = 200 * 200 * 4;
+int size = 600 * 600 * 4;
 
-static int allocate_buffer(unsigned int **data)
+
+static void render_text(unsigned char *data)
+{
+  cairo_surface_t *cairo_surface = cairo_image_surface_create_for_data(data, CAIRO_FORMAT_ARGB32, width, height, width * stride);
+  cairo_t *cairo = cairo_create(cairo_surface);
+
+  cairo_select_font_face(cairo, "Roboto Mono", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
+  cairo_set_font_size(cairo, 32.0);
+
+  cairo_move_to(cairo, 100.0, 50.0);
+  cairo_set_source_rgba(cairo, 1.0, 1.0, 1.0, 1.0);
+
+  cairo_show_text(cairo, "Cheese and goats");
+
+  cairo_destroy(cairo);
+  cairo_surface_destroy(cairo_surface);
+}
+
+static int allocate_buffer(unsigned char **data)
 {
   int fd = syscall(SYS_memfd_create, "buffer", 0);
   ftruncate(fd, size);
@@ -31,7 +48,7 @@ static int allocate_buffer(unsigned int **data)
 
 static struct wl_buffer *render_buffer(struct wl_shm *shm)
 {
-  unsigned int *data;
+  unsigned char *data;
   int fd = allocate_buffer(&data);
 
   struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
@@ -39,20 +56,9 @@ static struct wl_buffer *render_buffer(struct wl_shm *shm)
   wl_shm_pool_destroy(pool);
   close(fd);
 
-  for (int y = 0; y < height; ++y)
-  {
-    for (int x = 0; x < width; ++x)
-    {
-      if ((x + y / 8 * 8) % 16 < 8)
-        data[y * width + x] = 0xFF666666 - add;
-      else
-        data[y * width + x] = 0xFFEEEEEE + add;
-    }
-  }
+  render_text(data);
 
   munmap(data, size);
-
-  add = add + 1;
 
   return buffer;
 }
@@ -64,15 +70,14 @@ static void render_buffer_to_surface(struct wl_client *client)
   struct wl_buffer *buffer = render_buffer(client->shm);
   wl_surface_attach(client->surface, buffer, 0, 0);
 
-  struct wl_callback *wl_frame_callback = wl_surface_frame(client->surface);
-  wl_callback_add_listener(wl_frame_callback, &callback_listener, client);
+  // struct wl_callback *wl_frame_callback = wl_surface_frame(client->surface);
+  // wl_callback_add_listener(wl_frame_callback, &callback_listener, client);
 }
 
 static void frame_done(void *data,
                        struct wl_callback *wl_callback,
                        uint32_t callback_data)
 {
-  printf("Frame done: %d\n", add);
   wl_callback_destroy(wl_callback);
   struct wl_client *client = data;
   render_buffer_to_surface(client);
