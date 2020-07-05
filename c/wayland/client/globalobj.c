@@ -10,8 +10,6 @@ static void global_registry_handler(void *data, struct wl_registry *wl_registry,
 {
   struct wl_client *wl_client = data;
 
-  printf("Got an event for %s id %d\n", interface, id);
-
   if (strcmp(interface, wl_compositor_interface.name) == 0)
   {
     wl_client->compositor = wl_registry_bind(wl_registry, id, &wl_compositor_interface, version);
@@ -35,7 +33,7 @@ static void global_remove(void *our_data,
   printf("Got remove: %d", name);
 }
 
-static struct wl_registry_listener registry_listener = {
+const static struct wl_registry_listener registry_listener = {
     .global = global_registry_handler,
     .global_remove = global_remove,
 };
