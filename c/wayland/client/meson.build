@@ -6,7 +6,7 @@ project('client',
     'werror=true',
   ])
 
-src = ['client.c', 'globalobj.c', 'surface.c', 'xdg-shell-protocol.c']
+src = ['client.c', 'globalobj.c', 'surface.c', 'xdg-shell-protocol.c', 'text.c']
 
 build_args = ['-D_POSIX_C_SOURCE=200112L', '-D_DEFAULT_SOURCE' , '-pedantic', '-Wno-unused-variable']
 

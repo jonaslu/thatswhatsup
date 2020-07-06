@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
 #include <sys/mman.h>
-#include <cairo/cairo.h>
 
 #include "xdg-shell-client-protocol.h"
 
@@ -12,24 +11,6 @@
 const int width = 600, height = 600;
 int stride = 4;
 int size = 600 * 600 * 4;
-
-
-static void render_text(unsigned char *data)
-{
-  cairo_surface_t *cairo_surface = cairo_image_surface_create_for_data(data, CAIRO_FORMAT_ARGB32, width, height, width * stride);
-  cairo_t *cairo = cairo_create(cairo_surface);
-
-  cairo_select_font_face(cairo, "Roboto Mono", CAIRO_FONT_SLANT_NORMAL, CAIRO_FONT_WEIGHT_BOLD);
-  cairo_set_font_size(cairo, 32.0);
-
-  cairo_move_to(cairo, 100.0, 50.0);
-  cairo_set_source_rgba(cairo, 1.0, 1.0, 1.0, 1.0);
-
-  cairo_show_text(cairo, "Cheese and goats");
-
-  cairo_destroy(cairo);
-  cairo_surface_destroy(cairo_surface);
-}
 
 static int allocate_buffer(unsigned char **data)
 {
@@ -56,7 +37,7 @@ static struct wl_buffer *render_buffer(struct wl_shm *shm)
   wl_shm_pool_destroy(pool);
   close(fd);
 
-  render_text(data);
+  render_text(data, width, height, stride);
 
   munmap(data, size);
 

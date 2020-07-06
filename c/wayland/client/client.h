@@ -13,5 +13,6 @@ struct wl_client
 
 void init_registry_listener(struct wl_client *client);
 void add_and_render_surface(struct wl_client *client);
+void render_text(unsigned char *buffer, int width, int height, int stride);
 
 #endif
