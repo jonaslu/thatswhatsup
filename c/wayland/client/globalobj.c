@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <wayland-client.h>
 
-#include "wayland-client.h"
 #include "xdg-shell-client-protocol.h"
 
 #include "client.h"
@@ -23,6 +23,12 @@ static void global_registry_handler(void *data, struct wl_registry *wl_registry,
   if (strcmp(interface, wl_shm_interface.name) == 0)
   {
     wl_client->shm = wl_registry_bind(wl_registry, id, &wl_shm_interface, version);
+  }
+
+  if (strcmp(interface, wl_seat_interface.name) == 0)
+  {
+    wl_client->seat = wl_registry_bind(wl_registry, id, &wl_seat_interface, version);
+    init_kbd_input(wl_client);
   }
 }
 

@@ -6,7 +6,7 @@ project('client',
     'werror=true',
   ])
 
-src = ['client.c', 'globalobj.c', 'surface.c', 'xdg-shell-protocol.c', 'text.c']
+src = ['client.c', 'globalobj.c', 'surface.c', 'xdg-shell-protocol.c', 'text.c', 'input.c']
 
 build_args = ['-D_POSIX_C_SOURCE=200112L', '-D_DEFAULT_SOURCE' , '-pedantic', '-Wno-unused-variable']
 
@@ -16,7 +16,8 @@ wayland_client=dependency('wayland-client')
 # pango=dependency('pango')
 # pangocairo=dependency('pangocairo')
 cairo=dependency('cairo')
+xkbcommon=dependency('xkbcommon')
 
-project_deps=[pixman, wlroots, wayland_client, cairo]
+project_deps=[pixman, wlroots, wayland_client, cairo, xkbcommon]
 
 executable('client', src, dependencies: project_deps, c_args: build_args)

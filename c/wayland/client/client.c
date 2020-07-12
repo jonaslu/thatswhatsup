@@ -7,7 +7,8 @@
 
 #include "client.h"
 
-static void init_display(struct wl_client *client) {
+static void init_display(struct wl_client *client)
+{
   client->display = wl_display_connect(NULL);
   if (!client->display)
   {
@@ -28,7 +29,7 @@ int main()
   wl_display_dispatch(wl_client.display);
   wl_display_roundtrip(wl_client.display);
 
-  assert(wl_client.display && wl_client.compositor && wl_client.shm && wl_client.wm_base);
+  assert(wl_client.display && wl_client.compositor && wl_client.shm && wl_client.wm_base && wl_client.seat);
 
   add_and_render_surface(&wl_client);
 

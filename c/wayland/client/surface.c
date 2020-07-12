@@ -27,57 +27,35 @@ static int allocate_buffer(unsigned char **data)
   return fd;
 }
 
-static struct wl_buffer *render_buffer(struct wl_shm *shm)
+struct wl_buffer *render_buffer(struct wl_client *client, const char *text)
 {
   unsigned char *data;
   int fd = allocate_buffer(&data);
 
-  struct wl_shm_pool *pool = wl_shm_create_pool(shm, fd, size);
+  struct wl_shm_pool *pool = wl_shm_create_pool(client->shm, fd, size);
   struct wl_buffer *buffer = wl_shm_pool_create_buffer(pool, 0, width, height, width * stride, WL_SHM_FORMAT_XRGB8888);
   wl_shm_pool_destroy(pool);
   close(fd);
 
-  render_text(data, width, height, stride);
+  render_text(data, width, height, stride, text);
 
   munmap(data, size);
 
+  wl_surface_attach(client->surface, buffer, 0, 0);
+  wl_surface_damage_buffer(client->surface, 0, 0, INT32_MAX, INT32_MAX);
+  wl_surface_commit(client->surface);
+
   return buffer;
 }
-
-const static struct wl_callback_listener callback_listener;
-
-static void render_buffer_to_surface(struct wl_client *client)
-{
-  struct wl_buffer *buffer = render_buffer(client->shm);
-  wl_surface_attach(client->surface, buffer, 0, 0);
-
-  // struct wl_callback *wl_frame_callback = wl_surface_frame(client->surface);
-  // wl_callback_add_listener(wl_frame_callback, &callback_listener, client);
-}
-
-static void frame_done(void *data,
-                       struct wl_callback *wl_callback,
-                       uint32_t callback_data)
-{
-  wl_callback_destroy(wl_callback);
-  struct wl_client *client = data;
-  render_buffer_to_surface(client);
-
-  wl_surface_damage_buffer(client->surface, 0, 0, INT32_MAX, INT32_MAX);
-
-  wl_surface_commit(client->surface);
-}
-
-const static struct wl_callback_listener callback_listener = {
-    .done = frame_done,
-};
 
 static void xdg_surface_configure(void *data, struct xdg_surface *surface, uint32_t serial)
 {
   struct wl_client *client = data;
 
   xdg_surface_ack_configure(surface, serial);
-  render_buffer_to_surface(client);
+
+  struct wl_buffer *buffer = render_buffer(client, "dookie");
+  wl_surface_attach(client->surface, buffer, 0, 0);
 
   wl_surface_commit(client->surface);
 }
