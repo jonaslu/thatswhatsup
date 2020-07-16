@@ -14,10 +14,12 @@ struct wl_client
 
 void init_registry_listener(struct wl_client *client);
 void init_kbd_input(struct wl_client *client);
-void add_and_render_surface(struct wl_client *client);
-void render_text(unsigned char *buffer, int width, int height, int stride, const char *text);
+void init_surface(struct wl_client *client);
 void init_kbd_input(struct wl_client *client);
+void render_chars(struct wl_client *client, const char *text);
 
-struct wl_buffer *render_buffer(struct wl_client *client, const char *text);
+int init_pty();
+void read_from_pty(struct wl_client *wl_client);
+void write_to_pty(const char *text, int size);
 
 #endif

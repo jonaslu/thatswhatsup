@@ -10,6 +10,7 @@
 struct client_state
 {
   struct wl_client *client;
+
   struct wl_keyboard *keyboard;
   struct xkb_context *xkb_context;
   struct xkb_keymap *xkb_keymap;
@@ -58,7 +59,6 @@ static void wl_keyboard_listener_key(void *data, struct wl_keyboard *wl_keyboard
     xkb_keysym_t xkb_keysym = xkb_state_key_get_one_sym(client_state->xkb_state, keycode);
     if (xkb_keysym == XKB_KEY_BackSpace)
     {
-      printf("Gettin here");
       client_state->text[strlen(client_state->text) - 1] = '\0';
     }
     else
@@ -68,7 +68,13 @@ static void wl_keyboard_listener_key(void *data, struct wl_keyboard *wl_keyboard
     }
 
     printf("Key pressed: %s\n", buf);
-    render_buffer(client_state->client, client_state->text);
+    render_chars(client_state->client, client_state->text);
+
+    // On program start I want to fork out
+    // the forkpty and then on keypress here I want
+    // to feed it forward to the.
+
+    // Wrap it in a file so I can simply write to it from here
   }
 }
 
@@ -98,14 +104,12 @@ static void wl_seat_capabilities(void *data,
                                  struct wl_seat *wl_seat,
                                  uint32_t capabilities)
 {
-  printf("Listener seat added\n");
   struct client_state *client_state = data;
 
   int have_keyboard = capabilities & WL_SEAT_CAPABILITY_KEYBOARD;
 
   if (have_keyboard && client_state->keyboard == NULL)
   {
-    // printf("Client seat 2: %p\n", (void *)wl_seat);
     client_state->keyboard = wl_seat_get_keyboard(wl_seat);
     wl_keyboard_add_listener(client_state->keyboard, &wl_keyboard_listener, client_state);
   }
@@ -124,9 +128,7 @@ const static struct wl_seat_listener seat_listener = {
 void init_kbd_input(struct wl_client *client)
 {
   state.xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-  // state.xkb_keymap = xkb_keymap_new_from_string(state.xkb_context, "se", XKB_KEYMAP_FORMAT_TEXT_V1, XKB_KEYMAP_COMPILE_NO_FLAGS);
-  // state.xkb_state = xkb_state_new(state.xkb_keymap);
-  // printf("Client seat: %p\n", (void *)client->seat);
   state.client = client;
+
   wl_seat_add_listener(client->seat, &seat_listener, &state);
 }

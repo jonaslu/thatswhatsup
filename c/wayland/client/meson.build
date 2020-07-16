@@ -6,7 +6,14 @@ project('client',
     'werror=true',
   ])
 
-src = ['client.c', 'globalobj.c', 'surface.c', 'xdg-shell-protocol.c', 'text.c', 'input.c']
+src = [
+  'client.c',
+  'globalobj.c',
+  'surface.c',
+  'xdg-shell-protocol.c',
+  'input.c',
+  'pseudoterm.c',
+]
 
 build_args = ['-D_POSIX_C_SOURCE=200112L', '-D_DEFAULT_SOURCE' , '-pedantic', '-Wno-unused-variable']
 
@@ -18,6 +25,9 @@ wayland_client=dependency('wayland-client')
 cairo=dependency('cairo')
 xkbcommon=dependency('xkbcommon')
 
-project_deps=[pixman, wlroots, wayland_client, cairo, xkbcommon]
+compiler=meson.get_compiler('c')
+util=compiler.find_library('util')
+
+project_deps=[pixman, wlroots, wayland_client, cairo, xkbcommon, util]
 
 executable('client', src, dependencies: project_deps, c_args: build_args)
