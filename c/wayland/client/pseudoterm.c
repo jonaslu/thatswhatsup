@@ -25,6 +25,9 @@ int init_pty()
 
   if (pid == 0)
   {
+    setenv("TERM", "linux", 1);
+    // setenv("COLORTERM", option_term, 1);
+
     char *argv[1];
     if (execvp("/bin/bash", argv) == -1)
     {
@@ -42,14 +45,15 @@ void read_from_pty(struct wl_client *wl_client)
 {
   char buffer[BUF_SIZE];
 
-  if (read(masterfd, buffer, BUF_SIZE) == -1)
+  int charsRead = read(masterfd, buffer, BUF_SIZE);
+  if (charsRead == -1)
   {
     printf("Read error from master\n");
     printf("Error: %s\n", strerror(errno));
     exit(1);
   }
 
-  strcat(output, buffer);
+  strncat(output, buffer, charsRead);
 
   render_chars(wl_client, output);
 }
