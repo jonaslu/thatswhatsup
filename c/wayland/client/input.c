@@ -15,8 +15,6 @@ struct client_state
   struct xkb_context *xkb_context;
   struct xkb_keymap *xkb_keymap;
   struct xkb_state *xkb_state;
-  char text[128];
-  int text_index;
 } state;
 
 static void wl_keyboard_listener_keymap(void *data, struct wl_keyboard *wl_keyboard, uint32_t format, int32_t fd, uint32_t size)
@@ -57,24 +55,11 @@ static void wl_keyboard_listener_key(void *data, struct wl_keyboard *wl_keyboard
     uint8_t keycode = key + 8;
 
     xkb_keysym_t xkb_keysym = xkb_state_key_get_one_sym(client_state->xkb_state, keycode);
-    if (xkb_keysym == XKB_KEY_BackSpace)
-    {
-      client_state->text[strlen(client_state->text) - 1] = '\0';
-    }
-    else
-    {
-      int chars_read = xkb_state_key_get_utf8(client_state->xkb_state, keycode, buf, sizeof(buf));
-      strcat(client_state->text, buf);
-    }
+
+    int chars_read = xkb_state_key_get_utf8(client_state->xkb_state, keycode, buf, sizeof(buf));
 
     printf("Key pressed: %s\n", buf);
-    render_chars(client_state->client, client_state->text);
-
-    // On program start I want to fork out
-    // the forkpty and then on keypress here I want
-    // to feed it forward to the.
-
-    // Wrap it in a file so I can simply write to it from here
+    write_to_pty(buf, chars_read);
   }
 }
 

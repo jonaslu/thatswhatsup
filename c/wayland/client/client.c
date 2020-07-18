@@ -52,23 +52,21 @@ int main()
                                 .events = POLLIN,
                             }};
 
-  // I want the fd for the pty & wayland. So I can poll the pty fd here?
-
   for (;;)
   {
     wl_display_flush(wl_client.display);
-    if (poll(pollfd, 1, INT_MAX) == -1)
+    if (poll(pollfd, 2, INT_MAX) == -1)
     {
       printf("Poll error\n");
       exit(1);
     }
 
-    if (pollfd[0].revents |= POLLIN)
+    if (pollfd[0].revents & POLLIN)
     {
       wl_display_dispatch(wl_client.display);
     }
 
-    if (pollfd[1].revents |= POLLIN)
+    if (pollfd[1].revents & POLLIN)
     {
       read_from_pty(&wl_client);
     }

@@ -10,9 +10,9 @@
 
 #include "client.h"
 
-const int width = 600, height = 600;
+const int width = 800, height = 800;
 int stride = 4;
-int size = 600 * 600 * 4;
+int size = width * height * 4;
 
 void render_text(unsigned char *buffer, int width, int height, int stride, const char *text)
 {

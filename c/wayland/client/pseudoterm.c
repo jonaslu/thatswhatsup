@@ -4,10 +4,11 @@
 #include <stdio.h>
 #include <pty.h>
 #include <sys/select.h>
+#include <errno.h>
 
 #include "client.h"
 
-#define BUF_SIZE 256
+#define BUF_SIZE 10000
 
 char output[BUF_SIZE];
 int masterfd;
@@ -25,7 +26,6 @@ int init_pty()
   if (pid == 0)
   {
     char *argv[1];
-    argv[1] = "";
     if (execvp("/bin/bash", argv) == -1)
     {
       printf("Failed to start bash");
@@ -45,6 +45,7 @@ void read_from_pty(struct wl_client *wl_client)
   if (read(masterfd, buffer, BUF_SIZE) == -1)
   {
     printf("Read error from master\n");
+    printf("Error: %s\n", strerror(errno));
     exit(1);
   }
 
