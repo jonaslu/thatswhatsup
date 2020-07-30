@@ -1,0 +1,2 @@
+Install:
+yay -S bochs-sdl

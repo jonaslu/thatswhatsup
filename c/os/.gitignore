@@ -1,0 +1,6 @@
+loader.o
+os.iso
+bochslog.txt
+iso/
+stage2_eltorito
+kernel.elf
