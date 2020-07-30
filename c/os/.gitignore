@@ -4,3 +4,4 @@ bochslog.txt
 iso/
 stage2_eltorito
 kernel.elf
+kmain.o
