@@ -18,5 +18,6 @@ align 4
   dd CHECKSUM
 
 loader:
-  mov esp, kernel_stack + KERNEL_STACK_SIZE   ; point esb to the start of the stack (end of memory area)
-  call kmain
+  mov word [0x000B8000], 0x2841
+.loop:
+  jmp .loop
