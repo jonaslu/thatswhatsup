@@ -1,7 +1,9 @@
-gcc -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c kmain.c -o kmain.o
-
 nasm -f elf32 loader.s
-ld -T link.ld -melf_i386 loader.o kmain.o -o kernel.elf
+nasm -f elf32 io.s
+
+gcc -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -I. kmain.c -o kmain.o
+
+ld -T link.ld -melf_i386 io.o loader.o kmain.o -o kernel.elf
 
 mkdir -p iso/boot/grub
 cp stage2_eltorito iso/boot/grub
