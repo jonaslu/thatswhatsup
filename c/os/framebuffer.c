@@ -51,7 +51,7 @@ static void scroll_one_line()
   }
 }
 
-void write(const char *buf)
+void fb_write_text(const char *buf)
 {
   for (unsigned int i = 0;; i++)
   {
@@ -97,7 +97,7 @@ void set_fg_color(unsigned char fg)
   fb_fg = fg;
 }
 
-void set_bg_color(unsigned char bg)
+void fb_set_bg_color(unsigned char bg)
 {
   fb_bg = bg;
 }
@@ -108,7 +108,7 @@ void fb_show_cursor()
   outb(FB_DATA_PORT, 0x0);
 }
 
-void fb_move_cursor(unsigned short pos)
+void fb_reset_cursor(unsigned short pos)
 {
   outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
   outb(FB_DATA_PORT, (pos >> 8) & 0x00FF);
