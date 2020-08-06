@@ -55,19 +55,6 @@ void fb_write_text(const char *buf)
 {
   for (unsigned int i = 0;; i++)
   {
-    if (fb_column >= FB_COL_MAX)
-    {
-      fb_column = 0;
-      fb_row++;
-    }
-
-    if (fb_row >= FB_ROW_MAX)
-    {
-      scroll_one_line();
-      fb_column = 0;
-      fb_row -= 1;
-    }
-
     char next_char = buf[i];
 
     switch (next_char)
@@ -89,10 +76,26 @@ void fb_write_text(const char *buf)
       break;
     }
     }
+
+    if (fb_column >= FB_COL_MAX)
+    {
+      fb_column = 0;
+      fb_row++;
+    }
+
+    if (fb_row >= FB_ROW_MAX)
+    {
+      scroll_one_line();
+      fb_column = 0;
+      fb_row = FB_ROW_MAX - 1;
+    }
+
+    unsigned int location = fb_row * FB_COL_MAX + fb_column;
+    fb_move_cursor(location);
   }
 }
 
-void set_fg_color(unsigned char fg)
+void fb_set_fg_color(unsigned char fg)
 {
   fb_fg = fg;
 }
@@ -108,7 +111,7 @@ void fb_show_cursor()
   outb(FB_DATA_PORT, 0x0);
 }
 
-void fb_reset_cursor(unsigned short pos)
+void fb_move_cursor(unsigned int pos)
 {
   outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
   outb(FB_DATA_PORT, (pos >> 8) & 0x00FF);

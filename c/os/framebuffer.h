@@ -22,6 +22,6 @@ void fb_write_text(const char *buf);
 void fb_set_fg_color(unsigned char fg);
 void fb_set_bg_color(unsigned char bg);
 void fb_show_cursor();
-void fb_reset_cursor(unsigned short pos);
+void fb_move_cursor(unsigned int pos);
 
 #endif
