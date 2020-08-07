@@ -3,8 +3,9 @@ nasm -f elf32 io.s
 
 gcc -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -I. kmain.c -o kmain.o
 gcc -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -I. framebuffer.c -o framebuffer.o
+gcc -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c -I. serial.c -o serial.o
 
-ld -T link.ld -melf_i386 io.o loader.o framebuffer.o kmain.o -o kernel.elf
+ld -T link.ld -melf_i386 io.o loader.o framebuffer.o serial.o kmain.o -o kernel.elf
 
 mkdir -p iso/boot/grub
 cp stage2_eltorito iso/boot/grub

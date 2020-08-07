@@ -1,4 +1,5 @@
 global outb                     ; method to send data to I/O port
+global inb
 
 ; Write a byte to an I/O port
 ; Usage in C - outb(0x3DA, 14);
@@ -9,4 +10,12 @@ outb:
   mov al, [esp + 8]
   mov dx, [esp + 4]
   out dx, al
+  ret
+
+; Read a byte from an I/O port
+; [esp + 4] <- first argument is the port to read from
+; ret the byte read
+inb:
+  mov dx, [esp + 4]
+  in al, dx
   ret

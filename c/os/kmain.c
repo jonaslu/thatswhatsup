@@ -1,4 +1,5 @@
 #include "framebuffer.h"
+#include "serial.h"
 
 static void init_fb()
 {
@@ -12,6 +13,7 @@ static void init_fb()
 int kmain()
 {
   init_fb();
+  serial_init();
 
   char *buf = "12345\n";
 
@@ -22,6 +24,8 @@ int kmain()
   }
 
   fb_write_text("1235");
+
+  serial_write("1235\n");
 
   return 1;
 }
