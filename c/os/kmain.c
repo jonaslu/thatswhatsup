@@ -1,5 +1,6 @@
 #include "framebuffer.h"
 #include "serial.h"
+#include "gdt.h"
 
 static void init_fb()
 {
@@ -14,18 +15,9 @@ int kmain()
 {
   init_fb();
   serial_init();
-
-  char *buf = "12345\n";
-
-  for (unsigned int i = 0; i < 25; i++)
-  {
-    fb_write_text(buf);
-    (*buf)++;
-  }
+  init_gdt();
 
   fb_write_text("1235");
-
-  serial_write("1235\n");
 
   return 1;
 }
