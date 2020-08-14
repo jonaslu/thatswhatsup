@@ -71,7 +71,7 @@ void fb_write_text(const char *buf)
     default:
     {
       unsigned int location = fb_row * FB_COL_MAX + fb_column;
-      fb_write_cell(location, buf[i], fb_fg, fb_bg);
+      fb_write_cell(location, next_char, fb_fg, fb_bg);
       fb_column++;
       break;
     }
@@ -92,6 +92,32 @@ void fb_write_text(const char *buf)
 
     unsigned int location = fb_row * FB_COL_MAX + fb_column;
     fb_move_cursor(location);
+  }
+}
+
+void fb_write_dec(unsigned int digit)
+{
+  unsigned int divider = 1000000000;
+  unsigned int digits_done = 0;
+  while (digits_done < 10)
+  {
+    if (digit >= divider)
+    {
+      unsigned int next_digit = digit / divider;
+      unsigned char modulo = next_digit % 10;
+
+      // Asci char 48 = "0"
+      char char_digit = 48 + modulo;
+
+      char buf[2];
+      buf[0] = char_digit;
+      buf[2] = '\0';
+
+      fb_write_text((const char *)&buf);
+    }
+
+    divider = divider / 10;
+    digits_done++;
   }
 }
 

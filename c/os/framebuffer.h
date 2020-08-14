@@ -19,6 +19,7 @@
 #define FB_WHITE 15
 
 void fb_write_text(const char *buf);
+void fb_write_dec(unsigned int digit);
 void fb_set_fg_color(unsigned char fg);
 void fb_set_bg_color(unsigned char bg);
 void fb_show_cursor();

@@ -15,9 +15,13 @@ int kmain()
 {
   init_fb();
   serial_init();
+  // This will set up segments and enter 32-bit protected mode
   init_gdt();
 
-  fb_write_text("1235");
+  fb_write_text("Printin digits:\n");
+  fb_write_dec(1);
+  fb_write_text("\n");
+  fb_write_dec(0xFFFFFFFF);
 
   return 1;
 }
