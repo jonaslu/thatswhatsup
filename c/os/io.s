@@ -1,6 +1,7 @@
 global outb                     ; method to send data to I/O port
 global inb
 global lgdt
+global lidt
 
 ; Write a byte to an I/O port
 ; Usage in C - outb(0x3DA, 14);
@@ -25,7 +26,7 @@ lgdt:
   mov eax, [esp + 4]
   lgdt [eax]
 
-  mov ax, 0x10
+  mov ax, 0x10                ; kernel data-segment selector
   mov ds, ax
   mov es, ax
   mov fs, ax
@@ -33,4 +34,9 @@ lgdt:
   mov ss, ax
   jmp 0x08:.flush
 .flush:
+  ret
+
+lidt:
+  mov eax, [esp + 4]
+  lidt [eax]
   ret

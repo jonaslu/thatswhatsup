@@ -19,3 +19,5 @@ align 4
 
 loader:
   call kmain
+.loop:
+  jmp .loop

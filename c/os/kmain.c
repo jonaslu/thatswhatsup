@@ -1,6 +1,7 @@
 #include "framebuffer.h"
 #include "serial.h"
 #include "gdt.h"
+#include "idt.h"
 
 static void init_fb()
 {
@@ -17,11 +18,12 @@ int kmain()
   serial_init();
   // This will set up segments and enter 32-bit protected mode
   init_gdt();
+  init_idt();
 
-  fb_write_text("Printin digits:\n");
-  fb_write_dec(1);
-  fb_write_text("\n");
-  fb_write_dec(0xFFFFFFFF);
+  asm volatile ("int $0x3");
+  asm volatile ("int $0x4");
+
+  for(;;);
 
   return 1;
 }
