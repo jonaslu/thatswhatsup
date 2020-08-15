@@ -124,9 +124,9 @@ struct registers
   unsigned int eip, cs, eflags, useresp, ss;
 };
 
-void c_interrupt_handler(struct registers reg)
+void c_interrupt_handler(struct registers *reg)
 {
   fb_write_text("Received interrupt: ");
-  fb_write_dec(reg.int_no);
+  fb_write_dec(reg->int_no);
   fb_write_text("\n");
 }

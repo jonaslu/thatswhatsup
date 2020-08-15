@@ -28,7 +28,9 @@ common_interrupt_handler:
   mov fs, ax
   mov gs, ax
 
+  push esp            ; Pass the data on the stack as a pointer so it's explicit it's not ours
   call c_interrupt_handler
+  add esp, 4          ; Back up the pointer we just passed
 
   pop eax             ; Move back the previous data-segment selector
   mov ds, ax
@@ -37,7 +39,7 @@ common_interrupt_handler:
   mov gs, ax
 
   popa                ; pop edi, esi, ebp, esp, ebx, edx, ecx, eax
-  add esp, 8          ; Removed any pushed error-code (ours or theirs)
+  add esp, 8          ; Removed any pushed error-code (ours or theirs) + the interrupt number
   sti                 ; set interrupt flag
   iret
 
