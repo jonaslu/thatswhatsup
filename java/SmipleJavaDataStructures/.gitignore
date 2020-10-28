@@ -1,0 +1,5 @@
+bin/
+.metadata/
+.recommenders/
+*.swp
+hs_err_pid*
