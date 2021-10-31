@@ -40,7 +40,7 @@ int printPrimitive(uint64_t result)
     }
 
     printf("false");
-    return 1;
+    return 0;
   }
   else if (result == empty_list)
   {
