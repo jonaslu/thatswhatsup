@@ -27,5 +27,8 @@ start:
 
     jmp $
 
+;; Fills up the rest of the binary with 0:s making
+;; it 512 bytes, and the last two bytes are set to 0xaa55
+;; signalling it's bootable to bootloaders
 times 510-($-$$) db 0
 dw 0xaa55
