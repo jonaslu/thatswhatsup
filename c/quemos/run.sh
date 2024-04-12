@@ -1,2 +1,3 @@
-nasm -f bin -o boot.bin loader.asm
-qemu-system-x86_64 -drive format=raw,file=boot.bin
+make clean
+make
+qemu-system-i386 -kernel kernel.elf
