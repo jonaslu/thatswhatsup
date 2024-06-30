@@ -1,16 +1,20 @@
-// Read stuff an execute command
-
-use std::{io::{self, Write}, process};
+use std::process::{self};
 
 fn main() {
-    let mut input = String::new();
-    print!("$ > ");
-    io::stdout().flush().expect("Could not flush stdout");
-    io::stdin().read_line(&mut input).expect("Could not read stdin");
-    
-    input = input.trim().to_string();
+    let mut rl = rustyline::DefaultEditor::new().expect("Could not create rustyline editor");
 
-    let error_msg = format!("Could not run command: {}", input);
-    let mut command = process::Command::new(input).spawn().expect(&error_msg);
-    command.wait().expect("Couldn't wait for command");
+    loop {
+        let input = rl.readline("$ > ");
+
+        match input {
+            Ok(line) => {
+                let input_line = line.trim().to_string();
+
+                let error_msg = format!("Could not run command: {}", input_line);
+                let mut command = process::Command::new(input_line).spawn().expect(&error_msg);
+                command.wait().expect("Couldn't wait for command");
+            }
+            Err(_) => process::exit(0)
+        }
+    }
 }
